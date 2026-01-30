@@ -38,15 +38,11 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "guzzlehttp/guzzle": "^7.8",
-    "psr/container": "^2.0",
-    "psr/log": "^3.0",
-    "monolog/monolog": "^3.0",
-    "symfony/dotenv": "^7.1"
+    "psr/log": "^3.0"
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",
     "composer/composer": "^2.8",
-    "jetbrains/phpstorm-attributes": "^1.0",
     "phpcompatibility/php-compatibility": "^9.3",
     "phpunit/phpunit": "^9.6",
     "vimeo/psalm": "^5.26"
