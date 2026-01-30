@@ -9,11 +9,6 @@ use Bot\Update;
 interface CommandInterface
 {
     /**
-     * @return string
-     */
-    public function getName(): string;
-
-    /**
      * @param \Bot\Update $update
      * @return void
      */

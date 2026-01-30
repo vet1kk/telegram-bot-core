@@ -8,6 +8,7 @@ use Bot\Command\CommandManager;
 use Bot\Event\EventManager;
 use Bot\Event\Events\CommandHandledEvent;
 use Bot\Event\Events\ReceivedEvent;
+use Bot\Event\Events\UnhandledEvent;
 use Bot\Logger\Logger;
 use Bot\Receiver\ReceiverInterface;
 use Bot\Update;
@@ -16,17 +17,17 @@ use Psr\Log\LogLevel;
 class Router
 {
     /**
+     * @var \Bot\Receiver\ReceiverInterface[]
+     */
+    protected array $receivers = [];
+
+    /**
      * @param \Bot\Command\CommandManager $commandManager
      * @param \Bot\Event\EventManager $eventManager
      */
     public function __construct(protected CommandManager $commandManager, protected EventManager $eventManager)
     {
     }
-
-    /**
-     * @var \Bot\Receiver\ReceiverInterface[]
-     */
-    protected array $receivers = [];
 
     /**
      * @param \Bot\Receiver\ReceiverInterface $receiver
@@ -42,6 +43,7 @@ class Router
     /**
      * @param \Bot\Update $update
      * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function route(Update $update): void
     {
@@ -53,7 +55,9 @@ class Router
             if ($receiver->supports($update)) {
                 $command = $this->commandManager->resolve($update);
                 if ($command) {
-                    Logger::log(LogLevel::DEBUG, 'Executing command: ' . $command->getName());
+                    Logger::log(LogLevel::DEBUG, 'Executing command: ' . $command::class, [
+                        'chat_id' => $update->getChatId(),
+                    ]);
 
                     $command->handle($update);
 
@@ -67,6 +71,6 @@ class Router
             }
         }
 
-        $this->eventManager->emit(new ReceivedEvent($update));
+        $this->eventManager->emit(new UnhandledEvent($update));
     }
 }

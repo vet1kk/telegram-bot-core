@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Bot\Middleware\Middlewares;
 
+use Bot\ConfigService;
+use Bot\Http\Client;
 use Bot\Middleware\MiddlewareInterface;
 use Bot\Update;
 
 class MaintenanceMiddleware implements MiddlewareInterface
 {
-    public function __construct(protected bool $enabled = false)
+    /**
+     * @param \Bot\Http\Client $client
+     * @param \Bot\ConfigService $config
+     */
+    public function __construct(protected Client $client, protected ConfigService $config)
     {
     }
 
@@ -21,8 +27,8 @@ class MaintenanceMiddleware implements MiddlewareInterface
      */
     public function process(Update $update, callable $next): void
     {
-        if ($this->enabled) {
-//            $client->sendMessage($update->getChatId(), "🚧 We are currently down for maintenance!");
+        if (!empty($this->config->get('maintenance.enabled'))) {
+            $this->client->sendMessage($update->getChatId(), "🚧 We are currently down for maintenance!");
 
             return;
         }

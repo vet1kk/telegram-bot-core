@@ -5,23 +5,28 @@ declare(strict_types=1);
 namespace Bot\Middleware;
 
 use Bot\Update;
+use Psr\Container\ContainerInterface;
 
 class MiddlewareManager
 {
     /**
-     * @var array<int, \Bot\Middleware\MiddlewareInterface>
+     * @var array<class-string<MiddlewareInterface>> $middlewareStack
      */
     protected array $middlewareStack = [];
 
     /**
-     * @param \Bot\Middleware\MiddlewareInterface $middleware
-     * @return static
+     * @param \Psr\Container\ContainerInterface $container
      */
-    public function register(MiddlewareInterface $middleware): static
+    public function __construct(protected ContainerInterface $container)
     {
-        $this->middlewareStack[] = $middleware;
+    }
 
-        return $this;
+    /**
+     * @param class-string<MiddlewareInterface> $middlewareClass
+     */
+    public function register(string $middlewareClass): void
+    {
+        $this->middlewareStack[] = $middlewareClass;
     }
 
     /**
@@ -31,11 +36,14 @@ class MiddlewareManager
      */
     public function process(Update $update, callable $destination): void
     {
+        $container = $this->container;
         $pipeline = array_reduce(
             array_reverse($this->middlewareStack),
-            static function (callable $next, MiddlewareInterface $middleware) {
-                return static function (Update $update) use ($next, $middleware) {
-                    $middleware->process($update, $next);
+            static function (callable $next, string $middleware) use ($container) {
+                return static function (Update $update) use ($container, $next, $middleware) {
+                    /** @var \Bot\Middleware\MiddlewareInterface $instance */
+                    $instance = $container->get($middleware);
+                    $instance->process($update, $next);
                 };
             },
             $destination

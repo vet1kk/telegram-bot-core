@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Bot;
 
-use Bot\Command\CommandInterface;
+use Bot\Attribute\Listener;
 use Bot\Command\CommandManager;
+use Bot\Container\Container;
 use Bot\Event\EventManager;
 use Bot\Http\Client;
 use Bot\Logger\Logger;
-use Bot\Middleware\MiddlewareInterface;
 use Bot\Middleware\MiddlewareManager;
 use Bot\Receiver\ReceiverInterface;
 use Bot\Routing\Router;
@@ -18,7 +18,7 @@ use Psr\Log\LogLevel;
 
 class Bot
 {
-    protected Client $client;
+    protected Container $container;
     protected Router $router;
     protected CommandManager $commandManager;
     protected EventManager $eventManager;
@@ -26,11 +26,28 @@ class Bot
 
     protected function __construct(string $token, array $options = [])
     {
-        $this->client = new Client($token, $options);
-        $this->commandManager = new CommandManager();
-        $this->eventManager = new EventManager();
-        $this->middlewareManager = new MiddlewareManager();
+        $this->container = new Container();
+
+        $client = new Client($token, $options);
+        $this->container->set(Client::class, $client);
+
+        $config = new ConfigService($options['config'] ?? []);
+        $this->container->set(ConfigService::class, $config);
+
+        $this->commandManager = new CommandManager($this->container);
+        $this->eventManager = new EventManager($this->container);
         $this->router = new Router($this->commandManager, $this->eventManager);
+        $this->middlewareManager = new MiddlewareManager($this->container);
+    }
+
+    /**
+     * @param string $token
+     * @param array $options
+     * @return static
+     */
+    public static function create(string $token, array $options = []): static
+    {
+        return new static($token, $options);
     }
 
     /**
@@ -56,10 +73,10 @@ class Bot
     }
 
     /**
-     * @param \Bot\Middleware\MiddlewareInterface $middleware
+     * @param string $middleware
      * @return self
      */
-    public function withMiddleware(MiddlewareInterface $middleware): self
+    public function withMiddleware(string $middleware): self
     {
         $this->middlewareManager->register($middleware);
 
@@ -67,24 +84,36 @@ class Bot
     }
 
     /**
-     * @param \Bot\Command\CommandInterface $command
+     * @param string $commandClass
      * @return self
+     * @throws \ReflectionException
      */
-    public function withCommand(CommandInterface $command): self
+    public function withCommand(string $commandClass): self
     {
-        $this->commandManager->register($command);
+        $this->commandManager->register($commandClass);
 
         return $this;
     }
 
     /**
-     * @param string $eventClass
-     * @param callable $handler
+     * @param string $listenerClass
      * @return self
+     * @throws \ReflectionException
      */
-    public function on(string $eventClass, callable $handler): self
+    public function withListener(string $listenerClass): self
     {
-        $this->eventManager->on($eventClass, $handler);
+        $reflection = new \ReflectionClass($listenerClass);
+
+        foreach ($reflection->getMethods() as $method) {
+            $attributes = $method->getAttributes(Listener::class);
+
+            foreach ($attributes as $attribute) {
+                /** @var \Bot\Attribute\Listener $instance */
+                $instance = $attribute->newInstance();
+
+                $this->eventManager->listen($instance->eventClass, $listenerClass, $method->getName());
+            }
+        }
 
         return $this;
     }
@@ -134,10 +163,11 @@ class Bot
      * @param string $url
      * @return static
      * @throws \Bot\Http\Exception\TelegramException
+     * @throws \Exception
      */
     public function registerWebhook(string $url): static
     {
-        $this->client->setWebhook($url);
+        $this->container->get(Client::class)?->setWebhook($url);
 
         return $this;
     }
