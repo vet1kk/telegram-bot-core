@@ -1,5 +1,5 @@
 {
-  "name": "vetikk/telegram-bot-core",
+  "name": "vet1kk/telegram-bot-core",
   "description": "Lightweight Telegram Bot PHP Core Library",
   "keywords": [
     "php",
@@ -12,10 +12,10 @@
   ],
   "version": "1.0.0",
   "license": "MIT",
-  "homepage": "https://github.com/vetikk/telegram-bot-core",
+  "homepage": "https://github.com/vet1kk/telegram-bot-core",
   "support": {
-    "issues": "https://github.com/vetikk/telegram-bot-core/issues",
-    "source": "https://github.com/vetikk/telegram-bot-core"
+    "issues": "https://github.com/vet1kk/telegram-bot-core/issues",
+    "source": "https://github.com/vet1kk/telegram-bot-core"
   },
   "authors": [
     {
