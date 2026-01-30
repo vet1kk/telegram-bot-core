@@ -9,6 +9,8 @@ use Bot\Command\CommandManager;
 use Bot\Event\EventManager;
 use Bot\Http\Client;
 use Bot\Logger\Logger;
+use Bot\Middleware\MiddlewareInterface;
+use Bot\Middleware\MiddlewareManager;
 use Bot\Receiver\ReceiverInterface;
 use Bot\Routing\Router;
 use Psr\Log\LoggerInterface;
@@ -16,27 +18,19 @@ use Psr\Log\LogLevel;
 
 class Bot
 {
+    protected Client $client;
     protected Router $router;
     protected CommandManager $commandManager;
     protected EventManager $eventManager;
+    protected MiddlewareManager $middlewareManager;
 
     protected function __construct(string $token, array $options = [])
     {
-        Client::init($token, $options);
-
-        $this->router = Router::create();
-        $this->commandManager = CommandManager::create();
-        $this->eventManager = EventManager::create();
-    }
-
-    /**
-     * @param string $token
-     * @param array $options
-     * @return static
-     */
-    public static function create(string $token, array $options): static
-    {
-        return new static($token, $options);
+        $this->client = new Client($token, $options);
+        $this->commandManager = new CommandManager();
+        $this->eventManager = new EventManager();
+        $this->middlewareManager = new MiddlewareManager();
+        $this->router = new Router($this->commandManager, $this->eventManager);
     }
 
     /**
@@ -57,6 +51,17 @@ class Bot
     public function withReceiver(ReceiverInterface $receiver): self
     {
         $this->router->addReceiver($receiver);
+
+        return $this;
+    }
+
+    /**
+     * @param \Bot\Middleware\MiddlewareInterface $middleware
+     * @return self
+     */
+    public function withMiddleware(MiddlewareInterface $middleware): self
+    {
+        $this->middlewareManager->register($middleware);
 
         return $this;
     }
@@ -88,28 +93,41 @@ class Bot
      * @param \Bot\Update $update
      * @return void
      */
-    public static function run(Update $update): void
+    public function run(Update $update): void
     {
         Logger::log(LogLevel::DEBUG, 'Incoming update', ['update' => $update]);
-        Router::route($update);
+
+        $destination = function (Update $update) {
+            $this->router->route($update);
+        };
+
+        $this->middlewareManager->process($update, $destination);
     }
 
     /**
      * @return void
-     * @throws \JsonException
      */
-    public static function runFromWebhook(): void
+    public function runFromWebhook(): void
     {
         $input = file_get_contents('php://input');
 
-        $update = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $update = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            Logger::log(LogLevel::ERROR, 'Failed to decode webhook input', [
+                'error' => $e->getMessage(),
+                'input' => $input
+            ]);
+
+            return;
+        }
         Logger::log(LogLevel::DEBUG, 'Received update from webhook', ['update' => $update]);
 
         if (!$update) {
             return;
         }
 
-        static::run(new Update($update));
+        $this->run(new Update($update));
     }
 
     /**
@@ -119,7 +137,7 @@ class Bot
      */
     public function registerWebhook(string $url): static
     {
-        Client::setWebhook($url);
+        $this->client->setWebhook($url);
 
         return $this;
     }

@@ -9,41 +9,18 @@ use GuzzleHttp\Client as HttpClient;
 
 class Client
 {
-    protected static ?self $instance = null;
-    protected static ?HttpClient $client = null;
+    protected HttpClient $client;
 
     /**
      * @param string $token
      * @param array $config
      */
-    private function __construct(string $token, array $config = [])
+    public function __construct(string $token, array $config = [])
     {
         $config['base_uri'] = "https://api.telegram.org/bot$token/";
         $config['timeout'] = $config['timeout'] ?? 10;
 
-        static::$client = new HttpClient($config);
-    }
-
-    /**
-     * @param string $token
-     * @param array $config
-     */
-    public static function init(string $token, array $config = []): void
-    {
-        self::$instance ??= new self($token, $config);
-    }
-
-    /**
-     * @return HttpClient
-     * @throws \Bot\Http\Exception\TelegramException
-     */
-    protected static function getClient(): HttpClient
-    {
-        if (!static::$client) {
-            throw new TelegramException('Client not initialized.');
-        }
-
-        return static::$client;
+        $this->client = new HttpClient($config);
     }
 
     /**
@@ -52,10 +29,10 @@ class Client
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
      */
-    public static function request(string $method, array $params = []): array
+    public function request(string $method, array $params = []): array
     {
         try {
-            $response = static::getClient()->post($method, [
+            $response = $this->client->post($method, [
                 'json' => $params,
             ]);
 
@@ -71,9 +48,9 @@ class Client
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
      */
-    public static function sendMessage(int $chatId, string $text): array
+    public function sendMessage(int $chatId, string $text): array
     {
-        return static::request('sendMessage', [
+        return $this->request('sendMessage', [
             'chat_id' => $chatId,
             'text' => $text,
         ]);
@@ -84,9 +61,9 @@ class Client
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
      */
-    public static function setWebhook(string $url): array
+    public function setWebhook(string $url): array
     {
-        return static::request('setWebhook', [
+        return $this->request('setWebhook', [
             'url' => $url,
         ]);
     }

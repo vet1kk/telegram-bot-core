@@ -6,6 +6,19 @@ namespace Bot;
 
 class Update
 {
+    public const string TYPE_MESSAGE = 'message';
+    public const string TYPE_EDITED_MESSAGE = 'edited_message';
+    public const string TYPE_CALLBACK_QUERY = 'callback_query';
+    public const string TYPE_INLINE_QUERY = 'inline_query';
+    public const string TYPE_CHOSEN_INLINE_RESULT = 'chosen_inline_result';
+    public const array TYPES = [
+        self::TYPE_MESSAGE,
+        self::TYPE_EDITED_MESSAGE,
+        self::TYPE_CALLBACK_QUERY,
+        self::TYPE_INLINE_QUERY,
+        self::TYPE_CHOSEN_INLINE_RESULT,
+    ];
+
     public function __construct(protected array $data)
     {
     }
@@ -47,6 +60,12 @@ class Update
      */
     public function getType(): ?string
     {
-        return $this->data['type'] ?? null;
+        foreach (self::TYPES as $type) {
+            if (!empty($this->data[$type])) {
+                return $type;
+            }
+        }
+
+        return null;
     }
 }

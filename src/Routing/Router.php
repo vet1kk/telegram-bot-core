@@ -16,17 +16,17 @@ use Psr\Log\LogLevel;
 class Router
 {
     /**
-     * @var \Bot\Receiver\ReceiverInterface[]
+     * @param \Bot\Command\CommandManager $commandManager
+     * @param \Bot\Event\EventManager $eventManager
      */
-    protected static array $receivers = [];
+    public function __construct(protected CommandManager $commandManager, protected EventManager $eventManager)
+    {
+    }
 
     /**
-     * @return self
+     * @var \Bot\Receiver\ReceiverInterface[]
      */
-    public static function create(): self
-    {
-        return new self();
-    }
+    protected array $receivers = [];
 
     /**
      * @param \Bot\Receiver\ReceiverInterface $receiver
@@ -34,7 +34,7 @@ class Router
      */
     public function addReceiver(ReceiverInterface $receiver): self
     {
-        static::$receivers[] = $receiver;
+        $this->receivers[] = $receiver;
 
         return $this;
     }
@@ -43,30 +43,30 @@ class Router
      * @param \Bot\Update $update
      * @return void
      */
-    public static function route(Update $update): void
+    public function route(Update $update): void
     {
-        foreach (static::$receivers as $receiver) {
+        foreach ($this->receivers as $receiver) {
             Logger::log(LogLevel::DEBUG, 'Receiver called', [
                 'receiver' => $receiver::class
             ]);
 
             if ($receiver->supports($update)) {
-                $command = CommandManager::resolve($update);
+                $command = $this->commandManager->resolve($update);
                 if ($command) {
                     Logger::log(LogLevel::DEBUG, 'Executing command: ' . $command->getName());
 
                     $command->handle($update);
 
-                    EventManager::emit(new CommandHandledEvent($command, $update));
+                    $this->eventManager->emit(new CommandHandledEvent($command, $update));
 
                     return;
                 }
-                EventManager::emit(new ReceivedEvent($update));
+                $this->eventManager->emit(new ReceivedEvent($update));
 
                 return;
             }
         }
 
-        EventManager::emit(new ReceivedEvent($update));
+        $this->eventManager->emit(new ReceivedEvent($update));
     }
 }
