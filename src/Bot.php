@@ -29,9 +29,6 @@ class Bot
     protected function __construct(protected string $token, protected array $options = [])
     {
         $builder = new ContainerBuilder();
-        if (PHP_SAPI !== 'cli') {
-            $builder->enableCompilation(__DIR__ . '/var/cache');
-        }
         $this->container = $builder->build();
 
         $this->withServiceProvider(new CoreServiceProvider($token, $options));
