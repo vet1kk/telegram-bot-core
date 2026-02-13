@@ -13,6 +13,6 @@ class MessageReceiver implements ReceiverInterface
      */
     public function supports(Update $update): bool
     {
-        return !empty($update->getText());
+        return $update->getText() !== null;
     }
 }

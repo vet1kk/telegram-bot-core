@@ -8,12 +8,12 @@ use Bot\Attribute\Listener;
 use Bot\Event\Events\ReceivedEvent;
 use Bot\Http\Client;
 use Bot\Listener\ListenerInterface;
-use Bot\Logger\Logger;
+use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 class MessageLoggerListener implements ListenerInterface
 {
-    public function __construct(protected Client $client)
+    public function __construct(protected Client $client, protected LoggerInterface $logger)
     {
     }
 
@@ -22,7 +22,7 @@ class MessageLoggerListener implements ListenerInterface
     {
         $update = $event->getUpdate();
 
-        Logger::log(LogLevel::DEBUG, 'Non-command message received', [
+        $this->logger->log(LogLevel::INFO, 'Non-command message received', [
             'chat_id' => $update->getChatId(),
             'text' => $update->getText()
         ]);

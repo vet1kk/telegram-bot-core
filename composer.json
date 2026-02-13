@@ -39,6 +39,7 @@
     "ext-mbstring": "*",
     "guzzlehttp/guzzle": "^7.8",
     "psr/container": "^2.0",
+    "php-di/php-di": "^7.1",
     "psr/log": "^3.0"
   },
   "require-dev": {

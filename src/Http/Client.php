@@ -43,12 +43,12 @@ class Client
     }
 
     /**
-     * @param int $chatId
+     * @param ?int $chatId
      * @param string $text
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
      */
-    public function sendMessage(int $chatId, string $text): array
+    public function sendMessage(?int $chatId, string $text): array
     {
         return $this->request('sendMessage', [
             'chat_id' => $chatId,

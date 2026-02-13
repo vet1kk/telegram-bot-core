@@ -24,7 +24,7 @@ class CommandManager
     }
 
     /**
-     * @param string $commandClass
+     * @param class-string<\Bot\Command\CommandInterface> $commandClass
      * @return void
      * @throws \ReflectionException
      */
@@ -48,15 +48,16 @@ class CommandManager
      */
     public function resolve(Update $update): ?CommandInterface
     {
-        if ($update->getType() !== Update::TYPE_MESSAGE || !$update->getText()) {
+        $text = $update->getText();
+        if ($text === null || $update->getType() !== Update::TYPE_MESSAGE) {
             return null;
         }
 
-        if (!str_starts_with($update->getText(), '/')) {
+        if (!str_starts_with($text, '/')) {
             return null;
         }
 
-        $name = explode(' ', ltrim($update->getText(), '/'))[0];
+        $name = explode(' ', ltrim($text, '/'))[0];
         $class = $this->commands[$name] ?? null;
 
         if (!$class) {

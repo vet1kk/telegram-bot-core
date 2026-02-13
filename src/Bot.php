@@ -6,99 +6,110 @@ namespace Bot;
 
 use Bot\Attribute\Listener;
 use Bot\Command\CommandManager;
-use Bot\Container\Container;
 use Bot\Event\EventManager;
 use Bot\Http\Client;
-use Bot\Logger\Logger;
+use Bot\Middleware\MiddlewareInterface;
 use Bot\Middleware\MiddlewareManager;
+use Bot\Provider\CoreServiceProvider;
+use Bot\Provider\ServiceProviderInterface;
 use Bot\Receiver\ReceiverInterface;
 use Bot\Routing\Router;
+use DI\Container;
+use DI\ContainerBuilder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 class Bot
 {
     protected Container $container;
-    protected Router $router;
-    protected CommandManager $commandManager;
-    protected EventManager $eventManager;
-    protected MiddlewareManager $middlewareManager;
 
-    protected function __construct(string $token, array $options = [])
+    /**
+     * @throws \Exception
+     */
+    protected function __construct(protected string $token, protected array $options = [])
     {
-        $this->container = new Container();
+        $builder = new ContainerBuilder();
+        if (PHP_SAPI !== 'cli') {
+            $builder->enableCompilation(__DIR__ . '/var/cache');
+        }
+        $this->container = $builder->build();
 
-        $client = new Client($token, $options);
-        $this->container->set(Client::class, $client);
-
-        $config = new ConfigService($options['config'] ?? []);
-        $this->container->set(ConfigService::class, $config);
-
-        $this->commandManager = new CommandManager($this->container);
-        $this->eventManager = new EventManager($this->container);
-        $this->router = new Router($this->commandManager, $this->eventManager);
-        $this->middlewareManager = new MiddlewareManager($this->container);
+        $this->withServiceProvider(new CoreServiceProvider($token, $options));
     }
 
     /**
      * @param string $token
      * @param array $options
-     * @return static
+     * @return self
+     * @throws \Exception
      */
-    public static function create(string $token, array $options = []): static
+    public static function create(string $token, array $options): self
     {
-        return new static($token, $options);
+        return new self($token, $options);
     }
 
     /**
-     * @param \Psr\Log\LoggerInterface|null $logger
-     * @return self
+     * @return \DI\Container
      */
-    public function withLogger(?LoggerInterface $logger): self
+    public function getContainer(): Container
     {
-        Logger::setLogger($logger);
-
-        return $this;
+        return $this->container;
     }
 
     /**
      * @param \Bot\Receiver\ReceiverInterface $receiver
      * @return self
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function withReceiver(ReceiverInterface $receiver): self
     {
-        $this->router->addReceiver($receiver);
+        $this->container->get(Router::class)
+                        ->addReceiver($receiver);
 
         return $this;
     }
 
     /**
-     * @param string $middleware
+     * @param \Bot\Provider\ServiceProviderInterface $provider
+     * @return $this
+     */
+    public function withServiceProvider(ServiceProviderInterface $provider): self
+    {
+        $provider->register($this->container);
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<MiddlewareInterface> $middleware
      * @return self
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function withMiddleware(string $middleware): self
     {
-        $this->middlewareManager->register($middleware);
+        $this->container->get(MiddlewareManager::class)
+                        ->register($middleware);
 
         return $this;
     }
 
     /**
-     * @param string $commandClass
+     * @param class-string<\Bot\Command\CommandInterface> $commandClass
      * @return self
-     * @throws \ReflectionException
+     * @throws \ReflectionException|\Psr\Container\ContainerExceptionInterface
      */
     public function withCommand(string $commandClass): self
     {
-        $this->commandManager->register($commandClass);
+        $this->container->get(CommandManager::class)
+                        ->register($commandClass);
 
         return $this;
     }
 
     /**
-     * @param string $listenerClass
+     * @param class-string<\Bot\Listener\ListenerInterface> $listenerClass
      * @return self
-     * @throws \ReflectionException
+     * @throws \ReflectionException|\Psr\Container\ContainerExceptionInterface
      */
     public function withListener(string $listenerClass): self
     {
@@ -111,7 +122,8 @@ class Bot
                 /** @var \Bot\Attribute\Listener $instance */
                 $instance = $attribute->newInstance();
 
-                $this->eventManager->listen($instance->eventClass, $listenerClass, $method->getName());
+                $this->container->get(EventManager::class)
+                                ->listen($instance->eventClass, $listenerClass, $method->getName());
             }
         }
 
@@ -121,36 +133,42 @@ class Bot
     /**
      * @param \Bot\Update $update
      * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function run(Update $update): void
     {
-        Logger::log(LogLevel::DEBUG, 'Incoming update', ['update' => $update]);
+        $this->container->get(LoggerInterface::class)
+                        ->log(LogLevel::INFO, 'Incoming update', ['update' => $update]);
 
-        $destination = function (Update $update) {
-            $this->router->route($update);
+        $destination = function (Update $update): void {
+            $this->container->get(Router::class)
+                            ->route($update);
         };
 
-        $this->middlewareManager->process($update, $destination);
+        $this->container->get(MiddlewareManager::class)
+                        ->process($update, $destination);
     }
 
     /**
      * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function runFromWebhook(): void
     {
         $input = file_get_contents('php://input');
+        $logger = $this->container->get(LoggerInterface::class);
 
         try {
             $update = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            Logger::log(LogLevel::ERROR, 'Failed to decode webhook input', [
+            $logger->log(LogLevel::ERROR, 'Failed to decode webhook input', [
                 'error' => $e->getMessage(),
                 'input' => $input
             ]);
 
             return;
         }
-        Logger::log(LogLevel::DEBUG, 'Received update from webhook', ['update' => $update]);
+        $logger->log(LogLevel::INFO, 'Received update from webhook', ['update' => $update]);
 
         if (!$update) {
             return;
@@ -163,7 +181,7 @@ class Bot
      * @param string $url
      * @return static
      * @throws \Bot\Http\Exception\TelegramException
-     * @throws \Exception
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function registerWebhook(string $url): static
     {
