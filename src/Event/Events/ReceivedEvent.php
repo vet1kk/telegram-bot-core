@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace Bot\Event\Events;
 
+use Bot\DTO\Update\UpdateDTO;
 use Bot\Event\EventInterface;
-use Bot\Update;
 
 class ReceivedEvent implements EventInterface
 {
     /**
-     * @param Update $update
+     * @param \Bot\DTO\Update\UpdateDTO $update
      */
-    public function __construct(protected Update $update)
+    public function __construct(protected UpdateDTO $update)
     {
     }
 
     /**
-     * @return Update
+     * @return \Bot\DTO\Update\UpdateDTO
      */
-    public function getUpdate(): Update
+    public function getUpdate(): UpdateDTO
     {
         return $this->update;
     }

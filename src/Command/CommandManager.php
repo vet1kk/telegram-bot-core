@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Bot\Command;
 
 use Bot\Attribute\Command as CommandAttr;
-use Bot\Update;
+use Bot\DTO\Update\MessageUpdateDTO;
+use Bot\Event\EventManager;
+use Bot\Event\Events\CommandHandledEvent;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 class CommandManager
@@ -18,9 +21,14 @@ class CommandManager
 
     /**
      * @param \Psr\Container\ContainerInterface $container
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Bot\Event\EventManager $eventManager
      */
-    public function __construct(protected ContainerInterface $container)
-    {
+    public function __construct(
+        protected ContainerInterface $container,
+        protected LoggerInterface $logger,
+        protected EventManager $eventManager
+    ) {
     }
 
     /**
@@ -42,22 +50,18 @@ class CommandManager
     }
 
     /**
-     * @param \Bot\Update $update
+     * @param \Bot\DTO\Update\MessageUpdateDTO $update
      * @return ?\Bot\Command\CommandInterface
      * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
-    public function resolve(Update $update): ?CommandInterface
+    public function resolve(MessageUpdateDTO $update): ?CommandInterface
     {
-        $text = $update->getText();
-        if ($text === null || $update->getType() !== Update::TYPE_MESSAGE) {
+        if (!str_starts_with($update->message?->text, '/')) {
             return null;
         }
 
-        if (!str_starts_with($text, '/')) {
-            return null;
-        }
-
-        $name = explode(' ', ltrim($text, '/'))[0];
+        $name = explode(' ', ltrim($update->message?->text, '/'))[0];
         $class = $this->commands[$name] ?? null;
 
         if (!$class) {
@@ -65,5 +69,25 @@ class CommandManager
         }
 
         return $this->container->get($class);
+    }
+
+    /**
+     * @param \Bot\DTO\Update\MessageUpdateDTO $update
+     * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function handle(MessageUpdateDTO $update): void
+    {
+        $command = $this->resolve($update);
+        if ($command) {
+            $this->logger->info('Executing command: ' . $command::class, [
+                'update' => $update->jsonSerialize(),
+            ]);
+
+            $command->handle($update);
+
+            $this->eventManager->emit(new CommandHandledEvent($command, $update));
+        }
     }
 }

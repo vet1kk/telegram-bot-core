@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace Bot;
 
+use Bot\Action\ActionManager;
 use Bot\Attribute\Listener;
 use Bot\Command\CommandManager;
+use Bot\DTO\Update\UpdateDTO;
 use Bot\Event\EventManager;
 use Bot\Http\Client;
 use Bot\Middleware\MiddlewareInterface;
 use Bot\Middleware\MiddlewareManager;
 use Bot\Provider\CoreServiceProvider;
 use Bot\Provider\ServiceProviderInterface;
-use Bot\Receiver\ReceiverInterface;
 use Bot\Routing\Router;
+use Bot\Update\UpdateFactory;
 use DI\Container;
 use DI\ContainerBuilder;
 use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
 
 class Bot
 {
@@ -51,19 +52,6 @@ class Bot
     public function getContainer(): Container
     {
         return $this->container;
-    }
-
-    /**
-     * @param \Bot\Receiver\ReceiverInterface $receiver
-     * @return self
-     * @throws \Psr\Container\ContainerExceptionInterface
-     */
-    public function withReceiver(ReceiverInterface $receiver): self
-    {
-        $this->container->get(Router::class)
-                        ->addReceiver($receiver);
-
-        return $this;
     }
 
     /**
@@ -104,6 +92,19 @@ class Bot
     }
 
     /**
+     * @param class-string<\Bot\Action\ActionInterface> $actionClass
+     * @return self
+     * @throws \ReflectionException|\Psr\Container\ContainerExceptionInterface
+     */
+    public function withAction(string $actionClass): self
+    {
+        $this->container->get(ActionManager::class)
+                        ->register($actionClass);
+
+        return $this;
+    }
+
+    /**
      * @param class-string<\Bot\Listener\ListenerInterface> $listenerClass
      * @return self
      * @throws \ReflectionException|\Psr\Container\ContainerExceptionInterface
@@ -128,16 +129,14 @@ class Bot
     }
 
     /**
-     * @param \Bot\Update $update
+     * @param \Bot\DTO\Update\UpdateDTO $update
      * @return void
-     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
-    public function run(Update $update): void
+    public function run(UpdateDTO $update): void
     {
-        $this->container->get(LoggerInterface::class)
-                        ->log(LogLevel::INFO, 'Incoming update', ['update' => $update]);
-
-        $destination = function (Update $update): void {
+        $destination = function (UpdateDTO $update): void {
             $this->container->get(Router::class)
                             ->route($update);
         };
@@ -158,20 +157,20 @@ class Bot
         try {
             $update = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            $logger->log(LogLevel::ERROR, 'Failed to decode webhook input', [
+            $logger->error('Failed to decode webhook input', [
                 'error' => $e->getMessage(),
                 'input' => $input
             ]);
 
             return;
         }
-        $logger->log(LogLevel::INFO, 'Received update from webhook', ['update' => $update]);
 
         if (!$update) {
             return;
         }
+        $logger->info('Received update from webhook', ['update' => $update]);
 
-        $this->run(new Update($update));
+        $this->run(UpdateFactory::create($update));
     }
 
     /**

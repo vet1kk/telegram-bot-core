@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Bot\Event\Events;
 
 use Bot\Command\CommandInterface;
+use Bot\DTO\Update\MessageUpdateDTO;
 use Bot\Event\EventInterface;
-use Bot\Update;
 
 class CommandHandledEvent implements EventInterface
 {
     /**
      * @param CommandInterface $command
-     * @param Update $update
+     * @param \Bot\DTO\Update\MessageUpdateDTO $update
      */
-    public function __construct(protected CommandInterface $command, protected Update $update)
+    public function __construct(protected CommandInterface $command, protected MessageUpdateDTO $update)
     {
     }
 
@@ -27,9 +27,9 @@ class CommandHandledEvent implements EventInterface
     }
 
     /**
-     * @return Update
+     * @return \Bot\DTO\Update\MessageUpdateDTO
      */
-    public function getUpdate(): Update
+    public function getUpdate(): MessageUpdateDTO
     {
         return $this->update;
     }

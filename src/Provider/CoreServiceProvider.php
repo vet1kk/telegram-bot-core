@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Bot\Provider;
 
+use Bot\Action\ActionManager;
 use Bot\Command\CommandManager;
+use Bot\ConfigService;
 use Bot\Event\EventManager;
 use Bot\Http\Client;
 use Bot\Middleware\MiddlewareManager;
@@ -31,10 +33,11 @@ class CoreServiceProvider implements ServiceProviderInterface
     {
         $logger = $this->options['logger'] ?? new NullLogger();
         $container->set(LoggerInterface::class, $logger);
-
+        $container->set(ConfigService::class, new ConfigService($this->options));
         $container->set(Client::class, new Client($this->token, $this->options));
 
         $container->set(CommandManager::class, \DI\autowire(CommandManager::class));
+        $container->set(ActionManager::class, \DI\autowire(ActionManager::class));
         $container->set(MiddlewareManager::class, \DI\autowire(MiddlewareManager::class));
         $container->set(EventManager::class, \DI\autowire(EventManager::class));
         $container->set(Router::class, \DI\autowire(Router::class));
