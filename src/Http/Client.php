@@ -45,15 +45,23 @@ class Client
     /**
      * @param ?int $chatId
      * @param string $text
+     * @param array|\JsonSerializable $replyMarkup
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
      */
-    public function sendMessage(?int $chatId, string $text): array
+    public function sendMessage(?int $chatId, string $text, array|\JsonSerializable $replyMarkup = []): array
     {
-        return $this->request('sendMessage', [
+        $payload = [
             'chat_id' => $chatId,
             'text' => $text,
-        ]);
+        ];
+        if (!empty($replyMarkup)) {
+            $payload['reply_markup'] = ($replyMarkup instanceof \JsonSerializable)
+                ? $replyMarkup->jsonSerialize()
+                : $replyMarkup;
+        }
+
+        return $this->request('sendMessage', $payload);
     }
 
     /**
