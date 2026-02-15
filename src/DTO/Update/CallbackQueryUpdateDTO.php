@@ -22,7 +22,14 @@ class CallbackQueryUpdateDTO extends UpdateDTO
      */
     public function getChatId(): ?int
     {
-        return $this->callback_query?->message?->chat->id
-            ?? $this->callback_query?->from?->id;
+        return $this->callback_query?->message?->chat?->id;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getUserId(): ?int
+    {
+        return $this->callback_query?->from?->id;
     }
 }

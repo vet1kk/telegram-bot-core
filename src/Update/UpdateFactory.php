@@ -12,9 +12,9 @@ class UpdateFactory
 {
     /**
      * @param array $data
-     * @return \Bot\DTO\Update\UpdateDTO
+     * @return ?\Bot\DTO\Update\UpdateDTO
      */
-    public static function create(array $data): UpdateDTO
+    public static function create(array $data): ?UpdateDTO
     {
         foreach (UpdateType::cases() as $case) {
             if (isset($data[$case->value])) {
@@ -34,6 +34,6 @@ class UpdateFactory
             }
         }
 
-        throw new \InvalidArgumentException('Unsupported update type');
+        return null;
     }
 }

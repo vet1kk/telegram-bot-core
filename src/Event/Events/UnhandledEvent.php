@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Bot\Event\Events;
 
-use Bot\DTO\Update\UpdateDTO;
 use Bot\Event\EventInterface;
 
 class UnhandledEvent implements EventInterface
 {
     /**
-     * @param \Bot\DTO\Update\UpdateDTO $update
+     * @param mixed $rawUpdate
      */
-    public function __construct(protected UpdateDTO $update)
+    public function __construct(protected mixed $rawUpdate)
     {
     }
 
     /**
-     * @return \Bot\DTO\Update\UpdateDTO
+     * @return array
      */
-    public function getUpdate(): UpdateDTO
+    public function getUpdate(): mixed
     {
-        return $this->update;
+        return $this->rawUpdate;
     }
 }

@@ -24,4 +24,12 @@ class MessageUpdateDTO extends UpdateDTO
     {
         return $this->message?->chat?->id;
     }
+
+    /**
+     * @return int|null
+     */
+    public function getUserId(): ?int
+    {
+        return $this->message?->from?->id;
+    }
 }

@@ -59,15 +59,11 @@ class ActionManager
         $actionName = $update->callback_query?->data;
 
         if (empty($actionName)) {
-            $this->logger->warning('Received callback query with empty data.');
-
             return null;
         }
         $className = $this->actions[$actionName] ?? null;
 
         if (empty($className)) {
-            $this->logger->info("No action registered for name: $actionName");
-
             return null;
         }
 

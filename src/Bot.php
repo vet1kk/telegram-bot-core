@@ -9,6 +9,8 @@ use Bot\Attribute\Listener;
 use Bot\Command\CommandManager;
 use Bot\DTO\Update\UpdateDTO;
 use Bot\Event\EventManager;
+use Bot\Event\Events\ReceivedEvent;
+use Bot\Event\Events\UnhandledEvent;
 use Bot\Http\Client;
 use Bot\Middleware\MiddlewareInterface;
 use Bot\Middleware\MiddlewareManager;
@@ -133,6 +135,7 @@ class Bot
      * @return void
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function run(UpdateDTO $update): void
     {
@@ -155,7 +158,7 @@ class Bot
         $logger = $this->container->get(LoggerInterface::class);
 
         try {
-            $update = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
+            $rawUpdate = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $logger->error('Failed to decode webhook input', [
                 'error' => $e->getMessage(),
@@ -165,12 +168,32 @@ class Bot
             return;
         }
 
-        if (!$update) {
+        if (!$rawUpdate) {
             return;
         }
-        $logger->info('Received update from webhook', ['update' => $update]);
+        $logger->info('Received update from webhook', ['update' => $rawUpdate]);
 
-        $this->run(UpdateFactory::create($update));
+        try {
+            $eventManager = $this->container->get(EventManager::class);
+
+            $update = UpdateFactory::create($rawUpdate);
+            if (!$update) {
+                $eventManager->emit(new UnhandledEvent($rawUpdate));
+
+                return;
+            }
+
+            $eventManager->emit(new ReceivedEvent($update));
+
+            $this->run($update);
+        } catch (\Throwable $e) {
+            $logger->error('Error processing update from webhook', [
+                'error' => $e->getMessage(),
+                'update' => $update ?? $rawUpdate
+            ]);
+
+            return;
+        }
     }
 
     /**

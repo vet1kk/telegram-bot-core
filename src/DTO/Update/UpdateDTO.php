@@ -19,4 +19,6 @@ abstract class UpdateDTO extends DTO
     ];
 
     abstract public function getChatId(): ?int;
+
+    abstract public function getUserId(): ?int;
 }
