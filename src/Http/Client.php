@@ -7,7 +7,7 @@ namespace Bot\Http;
 use Bot\Http\Exception\TelegramException;
 use GuzzleHttp\Client as HttpClient;
 
-class Client
+class Client implements ClientInterface
 {
     protected HttpClient $client;
 
@@ -43,22 +43,31 @@ class Client
     }
 
     /**
-     * @param ?int $chatId
+     * @param int|string|null $chatId
      * @param string $text
      * @param array|\JsonSerializable $replyMarkup
+     * @param array $options
      * @return array
      * @throws \Bot\Http\Exception\TelegramException
+     * @throws \JsonException
      */
-    public function sendMessage(?int $chatId, string $text, array|\JsonSerializable $replyMarkup = []): array
-    {
+    public function sendMessage(
+        int|string|null $chatId,
+        string $text,
+        array|\JsonSerializable $replyMarkup = [],
+        array $options = []
+    ): array {
         $payload = [
+            ...$options,
             'chat_id' => $chatId,
             'text' => $text,
         ];
         if (!empty($replyMarkup)) {
-            $payload['reply_markup'] = ($replyMarkup instanceof \JsonSerializable)
+            $data = ($replyMarkup instanceof \JsonSerializable)
                 ? $replyMarkup->jsonSerialize()
                 : $replyMarkup;
+
+            $payload['reply_markup'] = json_encode($data, JSON_THROW_ON_ERROR);
         }
 
         return $this->request('sendMessage', $payload);

@@ -7,7 +7,7 @@ namespace Bot\Middleware;
 use Bot\DTO\Update\UpdateDTO;
 use Psr\Container\ContainerInterface;
 
-class MiddlewareManager
+class MiddlewareManager implements MiddlewareManagerInterface
 {
     /**
      * @var array<class-string<MiddlewareInterface>> $middlewareStack
@@ -23,10 +23,13 @@ class MiddlewareManager
 
     /**
      * @param class-string<MiddlewareInterface> $middlewareClass
+     * @return self
      */
-    public function register(string $middlewareClass): void
+    public function register(string $middlewareClass): self
     {
         $this->middlewareStack[] = $middlewareClass;
+
+        return $this;
     }
 
     /**

@@ -11,9 +11,9 @@ class Action
 {
     /**
      * @param string $name
-     * @param ?string $description
+     * @param string $description
      */
-    public function __construct(public string $name, public ?string $description = null)
+    public function __construct(public string $name, public string $description)
     {
     }
 }

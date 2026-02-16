@@ -10,7 +10,7 @@ use Bot\DTO\DTO;
  * @template T of \Bot\DTO\Update\UpdateDTO
  * @extends \Bot\DTO\DTO<T>
  */
-abstract class UpdateDTO extends DTO
+class UpdateDTO extends DTO
 {
     public ?int $update_id = null;
 
@@ -18,7 +18,13 @@ abstract class UpdateDTO extends DTO
         'update_id',
     ];
 
-    abstract public function getChatId(): ?int;
+    public function getChatId(): ?int
+    {
+        return null;
+    }
 
-    abstract public function getUserId(): ?int;
+    public function getUserId(): ?int
+    {
+        return null;
+    }
 }

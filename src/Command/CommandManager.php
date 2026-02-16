@@ -6,13 +6,14 @@ namespace Bot\Command;
 
 use Bot\Attribute\Command as CommandAttr;
 use Bot\DTO\Update\MessageUpdateDTO;
-use Bot\Event\EventManager;
+use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\CommandHandledEvent;
+use Bot\Event\Events\UnhandledEvent;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
-class CommandManager
+class CommandManager implements CommandManagerInterface
 {
     /**
      * @var array<string, class-string<\Bot\Command\CommandInterface>>
@@ -22,21 +23,21 @@ class CommandManager
     /**
      * @param \Psr\Container\ContainerInterface $container
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Bot\Event\EventManager $eventManager
+     * @param \Bot\Event\EventManagerInterface $eventManager
      */
     public function __construct(
         protected ContainerInterface $container,
         protected LoggerInterface $logger,
-        protected EventManager $eventManager
+        protected EventManagerInterface $eventManager
     ) {
     }
 
     /**
      * @param class-string<\Bot\Command\CommandInterface> $commandClass
-     * @return void
+     * @return $this
      * @throws \ReflectionException
      */
-    public function register(string $commandClass): void
+    public function register(string $commandClass): self
     {
         $reflection = new ReflectionClass($commandClass);
         $attributes = $reflection->getAttributes(CommandAttr::class);
@@ -45,8 +46,14 @@ class CommandManager
             throw new \InvalidArgumentException("Class $commandClass is missing the Command attribute.");
         }
 
+        if (count($attributes) > 1) {
+            throw new \LogicException("Class $commandClass has multiple Command attributes. Only one is allowed.");
+        }
+
         $attrInstance = current($attributes)->newInstance();
         $this->commands[$attrInstance->name] = $commandClass;
+
+        return $this;
     }
 
     /**
@@ -57,11 +64,16 @@ class CommandManager
      */
     public function resolve(MessageUpdateDTO $update): ?CommandInterface
     {
-        if (!str_starts_with($update->message?->text, '/')) {
+        $text = $update->message?->text;
+        if (!$text) {
             return null;
         }
 
-        $name = explode(' ', ltrim($update->message?->text, '/'))[0];
+        if (!str_starts_with($text, '/')) {
+            return null;
+        }
+
+        $name = explode(' ', ltrim($text, '/'))[0];
         $class = $this->commands[$name] ?? null;
 
         if (!$class) {
@@ -88,6 +100,31 @@ class CommandManager
             $command->handle($update);
 
             $this->eventManager->emit(new CommandHandledEvent($command, $update));
+
+            return;
         }
+        $this->eventManager->emit(new UnhandledEvent($update));
+    }
+
+    /**
+     * @return array<string, string>
+     * @throws \ReflectionException
+     */
+    public function getCommands(): array
+    {
+        $commands = [];
+
+        foreach ($this->commands as $commandClass) {
+            $reflection = new \ReflectionClass($commandClass);
+            $attributes = $reflection->getAttributes(CommandAttr::class);
+
+            if (isset($attributes[0])) {
+                /** @var CommandAttr $attr */
+                $attr = $attributes[0]->newInstance();
+                $commands[$attr->name] = $attr->description;
+            }
+        }
+
+        return $commands;
     }
 }

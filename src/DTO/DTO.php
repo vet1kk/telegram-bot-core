@@ -16,10 +16,10 @@ abstract class DTO implements \JsonSerializable
     protected array $required = [];
 
     /**
-     * @return self
+     * @return static
      * @phpstan-return T
      */
-    public static function default(): self
+    public static function default(): static
     {
         return self::fromArray(validate: false);
     }
@@ -27,10 +27,10 @@ abstract class DTO implements \JsonSerializable
     /**
      * @param array $data
      * @param bool $validate
-     * @return self
+     * @return static
      * @phpstan-return T
      */
-    public static function fromArray(array $data = [], bool $validate = true): self
+    public static function fromArray(array $data = [], bool $validate = true): static
     {
         $self = new static();
         foreach ($data as $key => $value) {
@@ -113,7 +113,8 @@ abstract class DTO implements \JsonSerializable
 
         if ($type instanceof \ReflectionNamedType && $type->isBuiltin()) {
             $value = match ($type->getName()) {
-                'int' => (int)$value,
+                'integer', 'int' => (int)$value,
+                'double', 'float' => (float)$value,
                 'string' => (string)$value,
                 'bool' => (bool)$value,
                 'array' => (array)$value,

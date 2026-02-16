@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bot\DTO\Keyboard;
 
 /**
- * @extends \Bot\DTO\Keyboard\KeyboardDTO<\Bot\DTO\Keyboard\ReplyKeyboardDTO
+ * @extends \Bot\DTO\Keyboard\KeyboardDTO<\Bot\DTO\Keyboard\ReplyKeyboardDTO>
  */
 class ReplyKeyboardDTO extends KeyboardDTO
 {

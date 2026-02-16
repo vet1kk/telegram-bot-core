@@ -18,6 +18,23 @@ class MessageUpdateDTO extends UpdateDTO
     ];
 
     /**
+     * @inheritDoc
+     */
+    public static function fromArray(array $data = [], bool $validate = true): static
+    {
+        $message = $data['message'] ?? $data['edited_message'] ?? null;
+
+        if (!empty($message)) {
+            $data['message'] ??= $message;
+        }
+
+        /** @var \Bot\DTO\Update\MessageUpdateDTO $self */
+        $self = parent::fromArray($data, $validate);
+
+        return $self;
+    }
+
+    /**
      * @return int|null
      */
     public function getChatId(): ?int
@@ -31,5 +48,13 @@ class MessageUpdateDTO extends UpdateDTO
     public function getUserId(): ?int
     {
         return $this->message?->from?->id;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEdit(): bool
+    {
+        return !empty($this->message->edit_date);
     }
 }

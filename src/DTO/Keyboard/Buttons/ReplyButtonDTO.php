@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bot\DTO\Keyboard\Buttons;
 
 /**
- * @extends \Bot\DTO\Keyboard\Buttons\ButtonDTO<\Bot\DTO\Keyboard\Buttons\ReplyButtonDTO
+ * @extends \Bot\DTO\Keyboard\Buttons\ButtonDTO<\Bot\DTO\Keyboard\Buttons\ReplyButtonDTO>
  */
 class ReplyButtonDTO extends ButtonDTO
 {

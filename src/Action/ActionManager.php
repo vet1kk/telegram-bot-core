@@ -6,13 +6,14 @@ namespace Bot\Action;
 
 use Bot\Attribute\Action as ActionAttr;
 use Bot\DTO\Update\CallbackQueryUpdateDTO;
-use Bot\Event\EventManager;
+use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\ActionHandledEvent;
+use Bot\Event\Events\UnhandledEvent;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
-class ActionManager
+class ActionManager implements ActionManagerInterface
 {
     /**
      * @var array<string, class-string<\Bot\Action\ActionInterface>>
@@ -22,21 +23,21 @@ class ActionManager
     /**
      * @param \Psr\Container\ContainerInterface $container
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Bot\Event\EventManager $eventManager
+     * @param \Bot\Event\EventManagerInterface $eventManager
      */
     public function __construct(
         protected ContainerInterface $container,
         protected LoggerInterface $logger,
-        protected EventManager $eventManager
+        protected EventManagerInterface $eventManager
     ) {
     }
 
     /**
      * @param class-string<\Bot\Action\ActionInterface> $actionClass
-     * @return void
+     * @return $this
      * @throws \ReflectionException
      */
-    public function register(string $actionClass): void
+    public function register(string $actionClass): self
     {
         $reflection = new ReflectionClass($actionClass);
         $attributes = $reflection->getAttributes(ActionAttr::class);
@@ -45,8 +46,14 @@ class ActionManager
             throw new \InvalidArgumentException("Class $actionClass is missing the Action attribute.");
         }
 
+        if (count($attributes) > 1) {
+            throw new \LogicException("Class $actionClass has multiple Action attributes. Only one is allowed.");
+        }
+
         $attrInstance = current($attributes)->newInstance();
         $this->actions[$attrInstance->name] = $actionClass;
+
+        return $this;
     }
 
     /**
@@ -86,6 +93,10 @@ class ActionManager
             $action->handle($update);
 
             $this->eventManager->emit(new ActionHandledEvent($action, $update));
+
+            return;
         }
+
+        $this->eventManager->emit(new UnhandledEvent($update));
     }
 }

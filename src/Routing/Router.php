@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace Bot\Routing;
 
-use Bot\Action\ActionManager;
-use Bot\Command\CommandManager;
+use Bot\Action\ActionManagerInterface;
+use Bot\Command\CommandManagerInterface;
 use Bot\DTO\Update\CallbackQueryUpdateDTO;
 use Bot\DTO\Update\MessageUpdateDTO;
 use Bot\DTO\Update\UpdateDTO;
-use Bot\Event\EventManager;
+use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\UnhandledEvent;
 use Psr\Log\LoggerInterface;
 
-class Router
+class Router implements RouterInterface
 {
     /**
-     * @param \Bot\Command\CommandManager $commandManager
-     * @param \Bot\Action\ActionManager $actionManager
-     * @param \Bot\Event\EventManager $eventManager
+     * @param \Bot\Command\CommandManagerInterface $commandManager
+     * @param \Bot\Action\ActionManagerInterface $actionManager
+     * @param \Bot\Event\EventManagerInterface $eventManager
      * @param \Psr\Log\LoggerInterface $logger
      */
     public function __construct(
-        protected CommandManager $commandManager,
-        protected ActionManager $actionManager,
-        protected EventManager $eventManager,
+        protected CommandManagerInterface $commandManager,
+        protected ActionManagerInterface $actionManager,
+        protected EventManagerInterface $eventManager,
         protected LoggerInterface $logger
     ) {
     }
