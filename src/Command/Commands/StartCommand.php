@@ -8,6 +8,7 @@ use Bot\Attribute\Command;
 use Bot\Command\CommandInterface;
 use Bot\DTO\Update\MessageUpdateDTO;
 use Bot\Http\ClientInterface;
+use Bot\Http\Message\SendMessage;
 use Psr\Log\LoggerInterface;
 
 #[Command(name: 'start', description: 'Initiate interaction with the bot')]
@@ -27,7 +28,10 @@ class StartCommand implements CommandInterface
     public function handle(MessageUpdateDTO $update): void
     {
         try {
-            $this->client->sendMessage($update->getChatId(), 'Hello! 👋 Welcome to the bot.');
+            $message = SendMessage::create()
+                                  ->setChatId($update->getChatId())
+                                  ->setText(_('Hello! 👋 Welcome to the bot.'));
+            $this->client->sendMessage($message);
         } catch (\Throwable $e) {
             $this->logger->error($e->getMessage());
         }

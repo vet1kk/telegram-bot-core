@@ -21,7 +21,7 @@ class WebhookHandler implements WebhookHandlerInterface
     public function handle(): ?array
     {
         $input = file_get_contents('php://input');
-        if (empty($input)) {
+        if ($input === false) {
             return null;
         }
 

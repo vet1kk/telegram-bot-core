@@ -18,11 +18,17 @@ class UpdateDTO extends DTO
         'update_id',
     ];
 
-    public function getChatId(): ?int
+    /**
+     * @return int|string|null
+     */
+    public function getChatId(): int|string|null
     {
         return null;
     }
 
+    /**
+     * @return int|null
+     */
     public function getUserId(): ?int
     {
         return null;

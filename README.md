@@ -23,6 +23,12 @@ decoupled and testable development experience.
 
 ## Getting Started
 
+## Installation
+
+```bash
+composer require vet1kk/telegram-bot-core
+```
+
 ### 1. Register and Initialize the Bot
 
 The `Bot` class is a **final orchestrator**. It initializes the `DI\Container` and registers core services via the
@@ -67,7 +73,7 @@ $bot->registerWebhook('https://your-domain.com/webhook.php');
 
 #### The `runFromWebhook` method manages the complete lifecycle through decoupled services:
 
-* **Ingestion**: `WebhookHandlerInterface` captures raw input (defaults to php://input).
+* **Ingestion**: `WebhookHandlerInterface` captures raw input (defaults to `php://input`).
 * **Transformation**: `UpdateFactoryInterface` builds the DTO graph via Reflection.
 * **Events**: Emits `ReceivedEvent` for global logging/analytics or any other job.
 * **Middleware Processing**: Passes the DTO through your registered middleware stack.
@@ -87,7 +93,7 @@ namespace App\Commands;
 use Bot\Attribute\Command;
 use Bot\Http\ClientInterface;
 use Bot\Command\CommandInterface;
-use Bot\DTO\Update\MessageUpdateDTO;
+use Bot\DTO\Update\MessageUpdateDTO;use Bot\Http\Message\SendMessage;
 
 #[Command(name: 'finish', description: 'Close the current session')]
 class FinishCommand implements CommandInterface 
@@ -98,7 +104,10 @@ class FinishCommand implements CommandInterface
 
     public function handle(MessageUpdateDTO $update): void 
     {
-        $this->client->sendMessage($update->getChatId(), 'See you later!');
+        $message = SendMessage::create()
+                              ->setChatId($update->getChatId())
+                              ->setText('See you later!');
+        $this->client->sendMessage($message);
     }
 }
 
@@ -169,37 +178,6 @@ $eventManager->emit(new MyCustomEvent($data));
 
 ---
 
-## Building Keyboards
-
-The framework uses a 2D `panel` grid. Buttons are validated by required fields before being added to the layout to
-ensure
-`API` compliance.
-
-```php
-use Bot\DTO\Keyboard\InlineKeyboardDTO;
-use Bot\DTO\Keyboard\Buttons\InlineButtonDTO;
-
-// Create buttons as DTOs using fromArray
-$confirmBtn = InlineButtonDTO::fromArray([
-    'text' => 'Confirm', 
-    'callback_data' => 'ok'
-]);
-
-// Build the keyboard grid
-$keyboard = InlineKeyboardDTO::fromArray([
-    'buttons' => [
-        [$confirmBtn] // Adds a row with one button
-    ]
-]);
-
-// Send via the client (which handles DTO serialization)
-$client->sendMessage($chatId, "Execute action?", [
-    'reply_markup' => $keyboard
-]);
-```
-
----
-
 ## Creating Actions
 
 Actions handle `callback_query` data from inline buttons. Use the `#[Action]` attribute to map the data string to a
@@ -212,6 +190,9 @@ use Bot\Action\ActionInterface;
 use Bot\Attribute\Action;
 use Bot\DTO\Update\CallbackQueryUpdateDTO;
 use Bot\Http\Client;
+use Bot\Keyboard\Buttons\InlineButton;
+use Bot\Keyboard\InlineKeyboard;
+use Bot\Http\Message\SendMessage;
 
 #[Action(name: 'menu')]
 class MenuAction implements ActionInterface 
@@ -225,21 +206,33 @@ class MenuAction implements ActionInterface
     
     public function handle(CallbackQueryUpdateDTO $update): void 
     {
-        // 1. Create buttons as DTOs
-        $profileBtn = InlineButtonDTO::fromArray(['text' => '👤 Profile', 'callback_data' => 'user_profile']);
-        $settingsBtn = InlineButtonDTO::fromArray(['text' => '⚙️ Settings', 'callback_data' => 'settings_menu']);
-        $helpBtn = InlineButtonDTO::fromArray(['text' => '❓ Help', 'callback_data' => 'help_info']);
-
-        // 2. Arrange buttons in a 2D array for the keyboard
-        $keyboard = InlineKeyboardDTO::fromArray([
-            'buttons' => [
-                [$profileBtn, $settingsBtn],
-                [$helpBtn]
-            ]
-        ]);
-
-        // 3. Send the message with the keyboard
-        $this->client->sendMessage($update->getChatId(), "Please choose an option:", $keyboard);
+        // 1. Build Inline Buttons using the fluent API
+        $profileBtn = InlineButton::create()
+                                  ->setText('👤 Profile')
+                                  ->setCallbackData('user_profile');
+    
+        $settingsBtn = InlineButton::create()
+                                   ->setText('⚙️ Settings')
+                                   ->setCallbackData('settings_menu');
+    
+        $helpBtn = InlineButton::create()
+                               ->setText('❓ Help')
+                               ->setCallbackData('help_info');
+    
+        // 2. Build the Keyboard grid
+        $keyboard = InlineKeyboard::create()
+                                  ->addButton($profileBtn, line: 1)
+                                  ->addButton($settingsBtn, line: 1)
+                                  ->addButton($helpBtn, line: 2);
+    
+        // 3. Create the specialized SendMessage obj
+        $message = SendMessage::create()
+                              ->setChatId($update->getChatId())
+                              ->setText("Please choose an option:")
+                              ->setKeyboard($keyboard);
+    
+        // 4. Send through the Client
+        $this->client->sendMessage($message);
     }
 }
 

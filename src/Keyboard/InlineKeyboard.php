@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Bot\DTO\Keyboard;
+namespace Bot\Keyboard;
 
 /**
- * @extends \Bot\DTO\Keyboard\KeyboardDTO<\Bot\DTO\Keyboard\InlineKeyboardDTO>
+ * @extends \Bot\Keyboard\Keyboard<\Bot\Keyboard\InlineKeyboard>
  */
-class InlineKeyboardDTO extends KeyboardDTO
+class InlineKeyboard extends Keyboard
 {
     /**
      * @inheritDoc

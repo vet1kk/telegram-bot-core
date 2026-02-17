@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Bot\Http;
 
+use Bot\Http\Message\SendMessageInterface;
+
 interface ClientInterface
 {
     /**
@@ -14,18 +16,10 @@ interface ClientInterface
     public function request(string $method, array $params = []): array;
 
     /**
-     * @param ?int $chatId
-     * @param string $text
-     * @param array|\JsonSerializable $replyMarkup
-     * @param array $options
+     * @param \Bot\Http\Message\SendMessageInterface $message
      * @return array
      */
-    public function sendMessage(
-        ?int $chatId,
-        string $text,
-        array|\JsonSerializable $replyMarkup = [],
-        array $options = []
-    ): array;
+    public function sendMessage(SendMessageInterface $message): array;
 
     /**
      * @param string $url

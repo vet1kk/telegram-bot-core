@@ -11,7 +11,7 @@ use Bot\DTO\DTO;
  */
 class ChatDTO extends DTO
 {
-    public ?int $id = null;
+    public int|string|null $id = null;
     public ?string $type = null;
     public ?string $first_name = null;
     public ?string $last_name = null;

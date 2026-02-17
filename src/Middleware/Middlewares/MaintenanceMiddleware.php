@@ -7,6 +7,7 @@ namespace Bot\Middleware\Middlewares;
 use Bot\Config\ConfigServiceInterface;
 use Bot\DTO\Update\UpdateDTO;
 use Bot\Http\ClientInterface;
+use Bot\Http\Message\SendMessage;
 use Bot\Middleware\MiddlewareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -32,7 +33,10 @@ class MaintenanceMiddleware implements MiddlewareInterface
     {
         if ($update->getChatId() !== null && !empty($this->config->getOption('maintenance.enabled'))) {
             try {
-                $this->client->sendMessage($update->getChatId(), "🚧 We are currently down for maintenance!");
+                $message = SendMessage::create()
+                                      ->setChatId($update->getChatId())
+                                      ->setText(_('🚧 We are currently down for maintenance!'));
+                $this->client->sendMessage($message);
             } catch (\Throwable $e) {
                 $this->logger->error($e->getMessage());
             }

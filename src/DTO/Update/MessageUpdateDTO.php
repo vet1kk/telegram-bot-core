@@ -35,9 +35,9 @@ class MessageUpdateDTO extends UpdateDTO
     }
 
     /**
-     * @return int|null
+     * @return int|string|null
      */
-    public function getChatId(): ?int
+    public function getChatId(): int|string|null
     {
         return $this->message?->chat?->id;
     }
