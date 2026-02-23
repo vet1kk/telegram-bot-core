@@ -206,7 +206,8 @@ final class Bot
 
         try {
             $update = $this->getUpdateFactory()
-                           ->create($rawUpdate ?? []);
+                           ->create($rawUpdate ?? [])
+                           ->setContainer($this->getContainer());
             $this->getEventManager()
                  ->emit(new ReceivedEvent($update));
 

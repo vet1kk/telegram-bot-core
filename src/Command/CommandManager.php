@@ -65,7 +65,7 @@ class CommandManager implements CommandManagerInterface
     public function resolve(MessageUpdateDTO $update): ?CommandInterface
     {
         $text = $update->message?->text;
-        if (!$text) {
+        if (!isset($text)) {
             return null;
         }
 

@@ -55,6 +55,6 @@ class MessageUpdateDTO extends UpdateDTO
      */
     public function isEdit(): bool
     {
-        return !empty($this->message->edit_date);
+        return $this->message->edit_date !== null;
     }
 }

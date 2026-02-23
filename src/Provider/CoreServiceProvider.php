@@ -14,6 +14,8 @@ use Bot\Event\EventManager;
 use Bot\Event\EventManagerInterface;
 use Bot\Http\Client;
 use Bot\Http\ClientInterface;
+use Bot\Http\Message\MessageFactory;
+use Bot\Http\Message\MessageFactoryInterface;
 use Bot\Middleware\MiddlewareManager;
 use Bot\Middleware\MiddlewareManagerInterface;
 use Bot\Routing\Router;
@@ -46,6 +48,7 @@ class CoreServiceProvider implements ServiceProviderInterface
         $container->set(WebhookHandlerInterface::class, \DI\autowire(WebhookHandler::class));
         $container->set(ConfigServiceInterface::class, fn() => new ConfigService($this->options));
         $container->set(ClientInterface::class, fn() => new Client($this->token, $this->options));
+        $container->set(MessageFactoryInterface::class, \DI\autowire(MessageFactory::class));
         $container->set(UpdateFactoryInterface::class, \DI\autowire(UpdateFactory::class));
         $container->set(CommandManagerInterface::class, \DI\autowire(CommandManager::class));
         $container->set(ActionManagerInterface::class, \DI\autowire(ActionManager::class));
@@ -54,6 +57,7 @@ class CoreServiceProvider implements ServiceProviderInterface
         $container->set(RouterInterface::class, \DI\autowire(Router::class));
         //aliasing
         $container->set(WebhookHandler::class, \DI\get(WebhookHandlerInterface::class));
+        $container->set(MessageFactory::class, \DI\get(MessageFactoryInterface::class));
         $container->set(UpdateFactory::class, \DI\get(UpdateFactoryInterface::class));
         $container->set(CommandManager::class, \DI\get(CommandManagerInterface::class));
         $container->set(ActionManager::class, \DI\get(ActionManagerInterface::class));

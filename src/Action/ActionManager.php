@@ -65,7 +65,7 @@ class ActionManager implements ActionManagerInterface
     {
         $actionName = $update->callback_query?->data;
 
-        if (empty($actionName)) {
+        if (!isset($actionName)) {
             return null;
         }
         $className = $this->actions[$actionName] ?? null;

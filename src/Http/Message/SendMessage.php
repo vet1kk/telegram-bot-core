@@ -33,10 +33,10 @@ class SendMessage implements SendMessageInterface
     }
 
     /**
-     * @param string $text
+     * @param ?string $text
      * @return self
      */
-    public function setText(string $text): self
+    public function setText(?string $text): self
     {
         $this->text = $text;
 
@@ -44,10 +44,10 @@ class SendMessage implements SendMessageInterface
     }
 
     /**
-     * @param \Bot\Keyboard\KeyboardInterface $keyboard
+     * @param ?\Bot\Keyboard\KeyboardInterface $keyboard
      * @return self
      */
-    public function setKeyboard(KeyboardInterface $keyboard): self
+    public function setKeyboard(?KeyboardInterface $keyboard): self
     {
         $this->keyboard = $keyboard;
 

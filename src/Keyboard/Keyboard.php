@@ -69,8 +69,8 @@ abstract class Keyboard implements KeyboardInterface
      */
     public function jsonSerialize(): array
     {
-        return array_map(static function (array $line) {
-            return array_map(static fn(ButtonInterface $b) => $b->jsonSerialize(), $line);
+        return array_map(static function (array $line): array {
+            return array_map(static fn(ButtonInterface $b): array => $b->jsonSerialize(), $line);
         }, $this->panel);
     }
 

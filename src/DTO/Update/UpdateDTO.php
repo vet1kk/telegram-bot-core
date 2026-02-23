@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bot\DTO\Update;
 
 use Bot\DTO\DTO;
+use Bot\Trait\ReplyTrait;
 
 /**
  * @template T of \Bot\DTO\Update\UpdateDTO
@@ -12,19 +13,13 @@ use Bot\DTO\DTO;
  */
 class UpdateDTO extends DTO
 {
+    use ReplyTrait;
+
     public ?int $update_id = null;
 
     protected array $required = [
         'update_id',
     ];
-
-    /**
-     * @return int|string|null
-     */
-    public function getChatId(): int|string|null
-    {
-        return null;
-    }
 
     /**
      * @return int|null

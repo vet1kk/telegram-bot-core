@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace Bot\Keyboard;
 
-interface KeyboardInterface
+interface KeyboardInterface extends \JsonSerializable
 {
-    /**
-     * @return array
-     */
-    public function jsonSerialize(): array;
-
     /**
      * @return bool
      */

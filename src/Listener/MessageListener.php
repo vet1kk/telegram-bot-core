@@ -6,17 +6,14 @@ namespace Bot\Listener;
 
 use Bot\Attribute\Listener;
 use Bot\Event\Events\UnhandledEvent;
-use Bot\Http\ClientInterface;
-use Bot\Http\Message\SendMessage;
 use Psr\Log\LoggerInterface;
 
 class MessageListener implements ListenerInterface
 {
     /**
-     * @param \Bot\Http\ClientInterface $client
      * @param \Psr\Log\LoggerInterface $logger
      */
-    public function __construct(protected ClientInterface $client, protected LoggerInterface $logger)
+    public function __construct(protected LoggerInterface $logger)
     {
     }
 
@@ -24,14 +21,11 @@ class MessageListener implements ListenerInterface
     public function onUnhandledEvent(UnhandledEvent $event): void
     {
         $this->logger->info('Received unhandled update', ['update' => $event->getUpdate()]);
-        $chatId = $event->getUpdate()->getChatId();
+        $update = $event->getUpdate();
 
-        if (isset($chatId)) {
+        if ($update->getChatId() !== null) {
             try {
-                $message = SendMessage::create()
-                                      ->setChatId($chatId)
-                                      ->setText(_("Sorry, I didn't understand that message."));
-                $this->client->sendMessage($message);
+                $update->reply(_("Sorry, I didn't understand that message."));
             } catch (\Throwable $e) {
                 $this->logger->error($e->getMessage());
             }

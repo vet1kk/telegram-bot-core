@@ -98,12 +98,19 @@ use Bot\DTO\Update\MessageUpdateDTO;use Bot\Http\Message\SendMessage;
 #[Command(name: 'finish', description: 'Close the current session')]
 class FinishCommand implements CommandInterface 
 {
-    public function __construct(
+     public function __construct(
+        // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
+        // The container will automatically resolve it when the action is executed.
+        // (Don't forget to register the service in your service provider)
         protected ClientInterface $client
     ) {}
-
+    
     public function handle(MessageUpdateDTO $update): void 
     {
+        // Send a reply to the user via the Update's reply method, which abstracts away the Client and Chat details.
+        $update->reply('See you later!');
+        
+        // Or you can use the Client directly if you need more control
         $message = SendMessage::create()
                               ->setChatId($update->getChatId())
                               ->setText('See you later!');
@@ -201,7 +208,6 @@ class MenuAction implements ActionInterface
         // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
         // The container will automatically resolve it when the action is executed.
         // (Don't forget to register the service in your service provider)
-        protected Client $client
     ) {}
     
     public function handle(CallbackQueryUpdateDTO $update): void 
@@ -225,14 +231,8 @@ class MenuAction implements ActionInterface
                                   ->addButton($settingsBtn, line: 1)
                                   ->addButton($helpBtn, line: 2);
     
-        // 3. Create the specialized SendMessage obj
-        $message = SendMessage::create()
-                              ->setChatId($update->getChatId())
-                              ->setText("Please choose an option:")
-                              ->setKeyboard($keyboard);
-    
-        // 4. Send through the Client
-        $this->client->sendMessage($message);
+        // 3. Reply to the user with the keyboard
+        $update->reply("Please choose an option:", $keyboard);
     }
 }
 
