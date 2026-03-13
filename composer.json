@@ -30,7 +30,13 @@
     "phpcbf": "phpcbf --colors src/",
     "test": "phpunit --colors=always",
     "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --colors=always --coverage-text --coverage-filter src",
-    "psalm": "psalm"
+    "psalm": "psalm",
+    "deploy": [
+      "@test",
+      "@psalm",
+      "@phpcs",
+      "@phpcbf"
+    ]
   },
   "require": {
     "php": "~8.3",
