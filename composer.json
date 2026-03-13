@@ -26,9 +26,9 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "scripts": {
-    "test": "phpunit --colors=always --configuration phpunit.xml",
-    "cs": "phpcs",
-    "cbf": "phpcbf",
+    "phpcs": "phpcs --colors src/",
+    "phpcbf": "phpcbf --colors src/",
+    "test": "phpunit --colors=always",
     "psalm": "psalm"
   },
   "require": {
