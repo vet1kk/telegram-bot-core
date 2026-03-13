@@ -15,6 +15,7 @@ class CallbackQueryDTO extends DTO
     public ?UserDTO $from = null;
     public ?string $chat_instance = null;
 
+    /** @var list<string> */
     protected array $required = [
         'id',
         'from',

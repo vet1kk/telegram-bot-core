@@ -9,7 +9,7 @@ trait OptionsTrait
     protected array $options = [];
 
     /**
-     * @return array
+     * @return array<array-key, mixed>
      */
     public function getOptions(): array
     {
@@ -17,7 +17,7 @@ trait OptionsTrait
     }
 
     /**
-     * @param array $options
+     * @param array<array-key, mixed> $options
      * @param bool $override
      * @return self
      */

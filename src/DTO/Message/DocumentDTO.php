@@ -16,6 +16,7 @@ class DocumentDTO extends DTO
     public ?PhotoSizeDTO $thumb = null;
     public ?PhotoSizeDTO $thumbnail = null;
 
+    /** @var list<string> */
     protected array $required = [
         'file_id',
         'file_unique_id',

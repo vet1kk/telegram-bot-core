@@ -14,7 +14,7 @@ class Client implements ClientInterface
 
     /**
      * @param string $token
-     * @param array $config
+     * @param array<array-key, mixed> $config
      * @param \GuzzleHttp\Client|null $httpClient
      */
     public function __construct(string $token, array $config = [], ?HttpClient $httpClient = null)
@@ -26,15 +26,15 @@ class Client implements ClientInterface
         }
 
         $config['base_uri'] = "https://api.telegram.org/bot$token/";
-        $config['timeout'] = $config['timeout'] ?? 10;
+        $config += ['timeout' => 10];
 
         $this->client = new HttpClient($config);
     }
 
     /**
      * @param string $method
-     * @param array $params
-     * @return array
+     * @param array<array-key, mixed> $params
+     * @return array<array-key, mixed>
      * @throws \Bot\Http\Exception\TelegramException
      */
     public function request(string $method, array $params = []): array
@@ -44,7 +44,13 @@ class Client implements ClientInterface
                 'json' => $params,
             ]);
 
-            return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+
+            if (!is_array($payload)) {
+                throw new TelegramException('HTTP response payload must decode to an array');
+            }
+
+            return $payload;
         } catch (\Throwable $e) {
             throw new TelegramException('HTTP request failed: ' . $e->getMessage(), 0, $e);
         }
@@ -52,17 +58,23 @@ class Client implements ClientInterface
 
     /**
      * @param \Bot\Http\Message\SendMessageInterface $message
-     * @return array
+     * @return array<array-key, mixed>
      * @throws \Bot\Http\Exception\TelegramException
      */
     public function sendMessage(SendMessageInterface $message): array
     {
-        return $this->request('sendMessage', $message->jsonSerialize());
+        $payload = $message->jsonSerialize();
+
+        if (!is_array($payload)) {
+            throw new TelegramException('Send message payload must be an array');
+        }
+
+        return $this->request('sendMessage', $payload);
     }
 
     /**
      * @param string $url
-     * @return array
+     * @return array<array-key, mixed>
      * @throws \Bot\Http\Exception\TelegramException
      */
     public function setWebhook(string $url): array

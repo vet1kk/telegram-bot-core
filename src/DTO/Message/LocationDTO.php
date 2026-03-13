@@ -15,6 +15,7 @@ class LocationDTO extends DTO
     public ?int $heading = null;
     public ?int $proximity_alert_radius = null;
 
+    /** @var list<string> */
     protected array $required = [
         'longitude',
         'latitude',

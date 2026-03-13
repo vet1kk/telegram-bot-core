@@ -11,7 +11,7 @@ use Bot\Keyboard\Buttons\ButtonInterface;
  */
 abstract class Keyboard implements KeyboardInterface
 {
-    /** @var \Bot\Keyboard\Buttons\ButtonInterface[][] */
+    /** @var array<int, list<\Bot\Keyboard\Buttons\ButtonInterface>> */
     protected array $panel = [];
 
     /**

@@ -10,6 +10,7 @@ class MessageUpdateDTO extends UpdateDTO
 {
     public ?MessageDTO $message = null;
 
+    /** @var list<string> */
     protected array $required = [
         'message',
     ];
@@ -19,10 +20,11 @@ class MessageUpdateDTO extends UpdateDTO
      */
     public static function fromArray(array $data = [], bool $validate = true): static
     {
+        /** @var mixed $message */
         $message = $data['message'] ?? $data['edited_message'] ?? null;
 
-        if ($message !== null) {
-            $data['message'] ??= $message;
+        if ($message !== null && !array_key_exists('message', $data)) {
+            $data = ['message' => $message] + $data;
         }
 
         return parent::fromArray($data, $validate);

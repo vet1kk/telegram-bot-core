@@ -10,6 +10,7 @@ class CallbackQueryUpdateDTO extends UpdateDTO
 {
     public ?CallbackQueryDTO $callback_query = null;
 
+    /** @var list<string> */
     protected array $required = [
         'callback_query',
     ];

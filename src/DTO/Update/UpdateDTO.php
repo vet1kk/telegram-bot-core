@@ -13,6 +13,7 @@ class UpdateDTO extends DTO
 
     public ?int $update_id = null;
 
+    /** @var list<string> */
     protected array $required = [
         'update_id',
     ];

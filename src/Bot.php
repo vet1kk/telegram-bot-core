@@ -15,6 +15,7 @@ use Bot\Middleware\MiddlewareManagerInterface;
 use Bot\Provider\CoreServiceProvider;
 use Bot\Provider\ServiceProviderInterface;
 use Bot\Routing\RouterInterface;
+use Bot\Trait\ServiceGetterTrait;
 use Bot\Update\UpdateFactoryInterface;
 use Bot\Webhook\WebhookHandlerInterface;
 use DI\Container;
@@ -23,6 +24,8 @@ use Psr\Log\LoggerInterface;
 
 final class Bot
 {
+    use ServiceGetterTrait;
+
     protected Container $container;
 
     /**
@@ -57,62 +60,56 @@ final class Bot
 
     /**
      * @return \Bot\Action\ActionManagerInterface
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getActionManager(): ActionManagerInterface
     {
-        return $this->getContainer()->get(ActionManagerInterface::class);
+        return $this->getService(ActionManagerInterface::class);
     }
 
     /**
      * @return \Bot\Command\CommandManagerInterface
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getCommandManager(): CommandManagerInterface
     {
-        return $this->getContainer()->get(CommandManagerInterface::class);
+        return $this->getService(CommandManagerInterface::class);
     }
 
     /**
      * @return \Bot\Routing\RouterInterface
-     * @throws \DI\NotFoundException
-     * @throws \DI\DependencyException
+     ** @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getRouter(): RouterInterface
     {
-        return $this->getContainer()->get(RouterInterface::class);
+        return $this->getService(RouterInterface::class);
     }
 
     /**
      * @return \Bot\Event\EventManagerInterface
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getEventManager(): EventManagerInterface
     {
-        return $this->getContainer()->get(EventManagerInterface::class);
+        return $this->getService(EventManagerInterface::class);
     }
 
     /**
      * @return \Bot\Update\UpdateFactoryInterface
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getUpdateFactory(): UpdateFactoryInterface
     {
-        return $this->getContainer()->get(UpdateFactoryInterface::class);
+        return $this->getService(UpdateFactoryInterface::class);
     }
 
     /**
      * @return \Bot\Middleware\MiddlewareManagerInterface
-     * @throws \DI\NotFoundException
-     * @throws \DI\DependencyException
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function getMiddlewareManager(): MiddlewareManagerInterface
     {
-        return $this->getContainer()->get(MiddlewareManagerInterface::class);
+        return $this->getService(MiddlewareManagerInterface::class);
     }
 
     /**
@@ -181,8 +178,6 @@ final class Bot
     /**
      * @param \Bot\DTO\Update\UpdateDTO $update
      * @return void
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
      * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function run(UpdateDTO $update): void
@@ -202,7 +197,7 @@ final class Bot
      */
     public function runFromWebhook(): void
     {
-        $rawUpdate = $this->getContainer()->get(WebhookHandlerInterface::class)->handle();
+        $rawUpdate = $this->getService(WebhookHandlerInterface::class)->handle();
 
         try {
             $update = $this->getUpdateFactory()
@@ -213,7 +208,7 @@ final class Bot
 
             $this->run($update);
         } catch (\Throwable $e) {
-            $this->getContainer()->get(LoggerInterface::class)->error('Webhook processing failed', [
+            $this->getService(LoggerInterface::class)->error('Webhook processing failed', [
                 'error' => $e->getMessage()
             ]);
         }
@@ -226,7 +221,7 @@ final class Bot
      */
     public function registerWebhook(string $url): self
     {
-        $this->getContainer()->get(ClientInterface::class)?->setWebhook($url);
+        $this->getService(ClientInterface::class)->setWebhook($url);
 
         return $this;
     }

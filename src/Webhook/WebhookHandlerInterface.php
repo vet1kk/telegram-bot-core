@@ -7,7 +7,7 @@ namespace Bot\Webhook;
 interface WebhookHandlerInterface
 {
     /**
-     * @return array|null
+     * @return array<array-key, mixed>|null
      */
     public function handle(): ?array;
 }

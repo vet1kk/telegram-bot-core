@@ -11,6 +11,8 @@ use Psr\Container\ContainerInterface;
 
 trait ReplyTrait
 {
+    use ServiceGetterTrait;
+
     protected ?ContainerInterface $container = null;
 
     /**
@@ -35,24 +37,16 @@ trait ReplyTrait
     /**
      * @param string $text
      * @param \Bot\Keyboard\KeyboardInterface|null $keyboard
-     * @param array $options
-     * @return array
+     * @param array<array-key, mixed> $options
+     * @return array<array-key, mixed>
      * @throws \LogicException
      * @throws \Psr\Container\ContainerExceptionInterface
      * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function reply(string $text, ?KeyboardInterface $keyboard = null, array $options = []): array
     {
-        if (!$this->container) {
-            throw new \LogicException('Container not set');
-        }
-
-        /**
-         * @var \Bot\Http\ClientInterface $client
-         * @var \Bot\Http\Message\MessageFactoryInterface $factory
-         */
-        $client = $this->container->get(ClientInterface::class);
-        $factory = $this->container->get(MessageFactoryInterface::class);
+        $client = $this->getService(ClientInterface::class);
+        $factory = $this->getService(MessageFactoryInterface::class);
 
         return $client->sendMessage(
             $factory::create()
@@ -61,5 +55,18 @@ trait ReplyTrait
                     ->setKeyboard($keyboard)
                     ->setOptions($options)
         );
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     * @throws \LogicException
+     */
+    protected function getContainer(): ContainerInterface
+    {
+        if ($this->container === null) {
+            throw new \LogicException('Container not set');
+        }
+
+        return $this->container;
     }
 }

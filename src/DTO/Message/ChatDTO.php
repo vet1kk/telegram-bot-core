@@ -14,6 +14,7 @@ class ChatDTO extends DTO
     public ?string $last_name = null;
     public ?string $username = null;
 
+    /** @var list<string> */
     protected array $required = [
         'id',
         'type',

@@ -15,6 +15,7 @@ class UserDTO extends DTO
     public ?string $username = null;
     public ?string $language_code = null;
 
+    /** @var list<string> */
     protected array $required = [
         'id',
         'is_bot',

@@ -30,6 +30,7 @@ class MessageDTO extends DTO
      */
     public ?array $photo = null;
 
+    /** @var list<string> */
     protected array $required = [
         'message_id',
         'chat',

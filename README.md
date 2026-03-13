@@ -16,8 +16,9 @@ decoupled and testable development experience.
 * **Middleware Stack**: Intercept and process updates globally for maintenance mode, logging, or authentication.
 * **Event System**: Emit and listen to custom events for decoupled side effects like logging or analytics.
 * **2D Keyboard Panel**: Build complex button grids with automatic validation and recursive JSON serialization.
-* **95%+ Type Coverage**: Verified with Psalm to ensure a rock-solid, predictable codebase
+* **99%+ Type Coverage**: Verified with Psalm to ensure a rock-solid, predictable codebase
 * **Multiple Bot Support**: Easily manage multiple bots with separate configurations and service providers.
+* **Test Coverage**: Comprehensive unit tests ensure reliability and maintainability.
 
 ---
 

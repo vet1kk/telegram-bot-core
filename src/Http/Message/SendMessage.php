@@ -78,6 +78,7 @@ class SendMessage implements SendMessageInterface
     }
 
     /**
+     * @return array<array-key, mixed>
      * @throws \JsonException
      */
     public function jsonSerialize(bool $validate = true): array

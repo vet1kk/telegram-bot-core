@@ -32,7 +32,7 @@ class ReplyButton extends Button
     }
 
     /**
-     * @return array
+     * @inheritDoc
      */
     public function jsonSerialize(): array
     {

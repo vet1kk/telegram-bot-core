@@ -30,11 +30,19 @@ class WebhookHandler implements WebhookHandlerInterface
 
     /**
      * Parse raw webhook payload.
+     *
+     * @return array<array-key, mixed>|null
      */
     public function handleRaw(string $input): ?array
     {
         try {
-            return json_decode($input, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
+
+            if (!is_array($payload)) {
+                throw new \JsonException('Webhook payload must decode to an array');
+            }
+
+            return $payload;
         } catch (\JsonException $e) {
             $this->logger->error('Failed to decode webhook', ['error' => $e->getMessage()]);
 

@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Bot\Event;
 
 use Bot\Attribute\Listener;
+use Bot\Listener\ListenerInterface;
+use Bot\Trait\ServiceGetterTrait;
 use Psr\Container\ContainerInterface;
 
 class EventManager implements EventManagerInterface
 {
+    use ServiceGetterTrait;
+
     /**
-     * @var array<string, array<int, array{string, string}>>
+     * @var array<string, array<int, array{class-string<ListenerInterface>, string}>>
      */
     protected array $listeners = [];
 
@@ -31,7 +35,13 @@ class EventManager implements EventManagerInterface
         $name = $event::class;
 
         foreach ($this->listeners[$name] ?? [] as [$listener, $method]) {
-            $this->container->get($listener)?->$method($event);
+            $listenerInstance = $this->getService($listener);
+
+            if (!method_exists($listenerInstance, $method)) {
+                throw new \LogicException(sprintf('Listener method `%s::%s` is not callable', $listener, $method));
+            }
+
+            $listenerInstance->$method($event);
         }
     }
 
@@ -60,7 +70,7 @@ class EventManager implements EventManagerInterface
 
     /**
      * @param string $eventClass
-     * @param string $listener
+     * @param class-string<ListenerInterface> $listener
      * @param string $method
      * @return void
      */
@@ -72,5 +82,13 @@ class EventManager implements EventManagerInterface
             }
         }
         $this->listeners[$eventClass][] = [$listener, $method];
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     */
+    protected function getContainer(): ContainerInterface
+    {
+        return $this->container;
     }
 }

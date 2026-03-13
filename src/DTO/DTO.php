@@ -13,6 +13,7 @@ abstract class DTO implements \JsonSerializable
 {
     use OptionsTrait;
 
+    /** @var list<string> */
     protected array $required = [];
 
     /**
@@ -24,15 +25,15 @@ abstract class DTO implements \JsonSerializable
     }
 
     /**
-     * @param array $data
+     * @param array<array-key, mixed> $data
      * @param bool $validate
      * @return static
      */
     public static function fromArray(array $data = [], bool $validate = true): static
     {
         $self = new static();
-        foreach ($data as $key => $value) {
-            $self->set($key, $value, $validate);
+        foreach (array_keys($data) as $key) {
+            $self->set((string)$key, $data[$key], $validate);
         }
         if ($validate) {
             $self->validate();
@@ -42,33 +43,22 @@ abstract class DTO implements \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array<array-key, mixed>
      */
     public function toArray(): array
     {
-        $result = [];
         $properties = get_object_vars($this);
 
         unset($properties['required'], $properties['options']);
 
-        foreach ($properties as $key => $value) {
-            if ($value instanceof self) {
-                $result[$key] = $value->toArray();
-            } elseif (is_array($value)) {
-                $result[$key] = array_map(
-                    static fn(mixed $item) => $item instanceof self ? $item->toArray() : $item,
-                    $value
-                );
-            } else {
-                $result[$key] = $value;
-            }
-        }
+        /** @var array<array-key, mixed> $result */
+        $result = array_map(fn(mixed $value): mixed => $this->normalizeValue($value), $properties);
 
         return array_merge($result, $this->getOptions());
     }
 
     /**
-     * @return array
+     * @return array<array-key, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -112,6 +102,7 @@ abstract class DTO implements \JsonSerializable
         }
 
         if ($type instanceof \ReflectionNamedType && $type->isBuiltin()) {
+            /** @var mixed $value */
             $value = match ($type->getName()) {
                 'integer', 'int' => match (true) {
                     is_int($value) => $value,
@@ -157,5 +148,26 @@ abstract class DTO implements \JsonSerializable
                 throw new \InvalidArgumentException(sprintf('Property `%s` is required', $property));
             }
         }
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    private function normalizeValue(mixed $value): mixed
+    {
+        if ($value instanceof self) {
+            return $value->toArray();
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        /** @psalm-suppress MixedAssignment */
+        return array_map(
+            static fn(mixed $item): mixed => $item instanceof self ? $item->toArray() : $item,
+            $value
+        );
     }
 }

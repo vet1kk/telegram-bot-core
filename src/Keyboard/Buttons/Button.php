@@ -45,7 +45,7 @@ abstract class Button implements ButtonInterface
     }
 
     /**
-     * @return array
+     * @return list<string>
      */
     protected function getRequiredFields(): array
     {

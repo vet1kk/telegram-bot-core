@@ -9,12 +9,15 @@ use Bot\DTO\Update\MessageUpdateDTO;
 use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\CommandHandledEvent;
 use Bot\Event\Events\UnhandledEvent;
+use Bot\Trait\ServiceGetterTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 class CommandManager implements CommandManagerInterface
 {
+    use ServiceGetterTrait;
+
     /**
      * @var array<string, class-string<\Bot\Command\CommandInterface>>
      */
@@ -63,7 +66,6 @@ class CommandManager implements CommandManagerInterface
      * @param \Bot\DTO\Update\MessageUpdateDTO $update
      * @return ?\Bot\Command\CommandInterface
      * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function resolve(MessageUpdateDTO $update): ?CommandInterface
     {
@@ -77,20 +79,20 @@ class CommandManager implements CommandManagerInterface
         }
 
         $name = explode(' ', ltrim($text, '/'))[0];
+        /** @var class-string<\Bot\Command\CommandInterface>|null $class */
         $class = $this->commands[$name] ?? null;
 
-        if (!$class) {
+        if ($class === null) {
             return null;
         }
 
-        return $this->container->get($class);
+        return $this->getService($class);
     }
 
     /**
      * @param \Bot\DTO\Update\MessageUpdateDTO $update
      * @return void
      * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function handle(MessageUpdateDTO $update): void
     {
@@ -129,5 +131,13 @@ class CommandManager implements CommandManagerInterface
         }
 
         return $commands;
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     */
+    protected function getContainer(): ContainerInterface
+    {
+        return $this->container;
     }
 }

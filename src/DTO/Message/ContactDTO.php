@@ -12,6 +12,7 @@ class ContactDTO extends DTO
     public ?string $phone_number = null;
     public ?string $first_name = null;
 
+    /** @var list<string> */
     protected array $required = [
         'phone_number',
         'first_name',

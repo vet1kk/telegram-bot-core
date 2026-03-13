@@ -9,12 +9,15 @@ use Bot\DTO\Update\CallbackQueryUpdateDTO;
 use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\ActionHandledEvent;
 use Bot\Event\Events\UnhandledEvent;
+use Bot\Trait\ServiceGetterTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 class ActionManager implements ActionManagerInterface
 {
+    use ServiceGetterTrait;
+
     /**
      * @var array<string, class-string<\Bot\Action\ActionInterface>>
      */
@@ -63,6 +66,7 @@ class ActionManager implements ActionManagerInterface
      * @param \Bot\DTO\Update\CallbackQueryUpdateDTO $update
      * @return ?\Bot\Action\ActionInterface
      * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function resolve(CallbackQueryUpdateDTO $update): ?ActionInterface
     {
@@ -71,19 +75,21 @@ class ActionManager implements ActionManagerInterface
         if (!isset($actionName)) {
             return null;
         }
+        /** @var class-string<\Bot\Action\ActionInterface>|null $className */
         $className = $this->actions[$actionName] ?? null;
 
-        if (empty($className)) {
+        if ($className === null) {
             return null;
         }
 
-        return $this->container->get($className);
+        return $this->getService($className);
     }
 
     /**
      * @param \Bot\DTO\Update\CallbackQueryUpdateDTO $update
      * @return void
      * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function handle(CallbackQueryUpdateDTO $update): void
     {
@@ -101,5 +107,13 @@ class ActionManager implements ActionManagerInterface
         }
 
         $this->eventManager->emit(new UnhandledEvent($update));
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     */
+    protected function getContainer(): ContainerInterface
+    {
+        return $this->container;
     }
 }

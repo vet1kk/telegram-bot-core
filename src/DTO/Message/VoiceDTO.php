@@ -14,6 +14,7 @@ class VoiceDTO extends DTO
     public ?int $duration = null;
     public ?string $mime_type = null;
 
+    /** @var list<string> */
     protected array $required = [
         'file_id',
         'file_unique_id',
