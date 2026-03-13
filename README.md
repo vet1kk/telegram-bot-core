@@ -2,6 +2,7 @@
 
 [![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Packagist Version](https://img.shields.io/packagist/v/vet1kk/telegram-bot-core?logo=packagist&logoColor=white)](https://packagist.org/packages/vet1kk/telegram-bot-core)
+[![GitHub Release](https://img.shields.io/github/v/release/vet1kk/telegram-bot-core?display_name=tag)](https://github.com/vet1kk/telegram-bot-core/releases)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/vet1kk/telegram-bot-core?logo=composer&logoColor=white)](https://packagist.org/packages/vet1kk/telegram-bot-core)
 [![Telegram Bot API](https://img.shields.io/badge/Telegram-Bot%20API-26A5E4?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
 [![PHPUnit](https://img.shields.io/badge/tests-PHPUnit%209-0A9EDC?logo=phpunit&logoColor=white)](./phpunit.xml)
