@@ -26,8 +26,8 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "scripts": {
-    "phpcs": "phpcs --colors src/",
-    "phpcbf": "phpcbf --colors src/",
+    "phpcs": "phpcs --colors",
+    "phpcbf": "phpcbf --colors",
     "test": "phpunit --colors=always",
     "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit --colors=always --coverage-text --coverage-filter src",
     "psalm": "psalm",
