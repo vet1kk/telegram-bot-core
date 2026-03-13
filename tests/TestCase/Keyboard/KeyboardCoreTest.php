@@ -61,6 +61,34 @@ final class KeyboardCoreTest extends TestCase
     /**
      * @return void
      */
+    public function testAddButtonThrowsWhenProvidedButtonIsInvalid(): void
+    {
+        $button = $this->createMock(\Bot\Keyboard\Buttons\ButtonInterface::class);
+        $button->method('isValid')->willReturn(false);
+
+        $keyboard = InlineKeyboard::create();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('The provided button structure is invalid');
+        $keyboard->addButton($button);
+    }
+
+    /**
+     * @return void
+     */
+    public function testAddButtonsThrowsWhenArrayContainsNonButtons(): void
+    {
+        $keyboard = InlineKeyboard::create();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('All elements in the buttons array must implement ButtonInterface');
+        /** @noinspection PhpParamsInspection */
+        $keyboard->addButtons(['invalid']);
+    }
+
+    /**
+     * @return void
+     */
     public function testKeyboardRemoveSerializeAndValidity(): void
     {
         $k = KeyboardRemove::create()->setRemove(true)->setSelective(true);

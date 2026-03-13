@@ -26,4 +26,44 @@ final class MessageListenerTest extends TestCase
 
         $listener->onUnhandledEvent($event);
     }
+
+    /**
+     * @return void
+     */
+    public function testOnUnhandledEventRepliesWhenChatIdExists(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('info');
+        $logger->expects($this->never())->method('error');
+
+        $listener = new MessageListener($logger);
+
+        $update = $this->createMock(UpdateDTO::class);
+        $update->method('getChatId')->willReturn(123);
+        $update->expects($this->once())
+               ->method('reply')
+               ->with("Sorry, I didn't understand that message.");
+
+        $listener->onUnhandledEvent(new UnhandledEvent($update));
+    }
+
+    /**
+     * @return void
+     */
+    public function testOnUnhandledEventLogsErrorWhenReplyFails(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('info');
+        $logger->expects($this->once())->method('error')->with('boom');
+
+        $listener = new MessageListener($logger);
+
+        $update = $this->createMock(UpdateDTO::class);
+        $update->method('getChatId')->willReturn(123);
+        $update->expects($this->once())
+               ->method('reply')
+               ->willThrowException(new \RuntimeException('boom'));
+
+        $listener->onUnhandledEvent(new UnhandledEvent($update));
+    }
 }

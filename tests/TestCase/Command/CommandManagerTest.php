@@ -11,6 +11,7 @@ use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\CommandHandledEvent;
 use Bot\Event\Events\UnhandledEvent;
 use BotTest\Fixture\TestCommandWithAttribute;
+use BotTest\Fixture\TestCommandWithMultipleAttributes;
 use BotTest\Fixture\TestCommandWithoutAttribute;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -32,6 +33,18 @@ final class CommandManagerTest extends TestCase
 
     /**
      * @return void
+     * @throws \ReflectionException
+     */
+    public function testRegisterThrowsWhenMultipleAttributesArePresent(): void
+    {
+        $manager = $this->createManager();
+        $this->expectException(\LogicException::class);
+
+        $manager->register(TestCommandWithMultipleAttributes::class);
+    }
+
+    /**
+     * @return void
      * @throws \Psr\Container\ContainerExceptionInterface
      */
     public function testResolveReturnsNullWhenMessageTextMissingOrNotCommand(): void
@@ -39,6 +52,7 @@ final class CommandManagerTest extends TestCase
         $manager = $this->createManager();
 
         $this->assertNull($manager->resolve(MessageUpdateDTO::default()));
+        $this->assertNull($manager->resolve(MessageUpdateDTO::fromArray(['message' => ['text' => 'hello']], false)));
     }
 
     /**

@@ -52,6 +52,22 @@ final class BuiltInCommandsTest extends TestCase
     /**
      * @return void
      */
+    public function testStartCommandLogsErrorWhenReplyFails(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error')->with('boom');
+
+        $start = new StartCommand($logger);
+
+        $update = $this->createMock(MessageUpdateDTO::class);
+        $update->expects($this->once())->method('reply')->willThrowException(new \RuntimeException('boom'));
+
+        $start->handle($update);
+    }
+
+    /**
+     * @return void
+     */
     public function testHelpCommandHandle(): void
     {
         $cm = $this->createMock(CommandManagerInterface::class);
@@ -83,5 +99,47 @@ final class BuiltInCommandsTest extends TestCase
         $help->handle($update);
 
         $this->assertTrue(true);
+    }
+
+    /**
+     * @return void
+     */
+    public function testHelpCommandRepliesWhenNoCommandsAreAvailable(): void
+    {
+        $cm = $this->createMock(CommandManagerInterface::class);
+        $cm->method('getCommands')->willReturn([]);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $help = new HelpCommand($logger, $cm);
+
+        $update = $this->createMock(MessageUpdateDTO::class);
+        $update->expects($this->once())
+               ->method('reply')
+               ->with('No commands are currently available.');
+
+        $help->handle($update);
+    }
+
+    /**
+     * @return void
+     */
+    public function testHelpCommandLogsErrorWhenReplyFails(): void
+    {
+        $cm = $this->createMock(CommandManagerInterface::class);
+        $cm->method('getCommands')->willReturn(['start' => 'Start']);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+               ->method('error')
+               ->with('Failed to send help message: boom');
+
+        $help = new HelpCommand($logger, $cm);
+
+        $update = $this->createMock(MessageUpdateDTO::class);
+        $update->expects($this->once())
+               ->method('reply')
+               ->willThrowException(new \RuntimeException('boom'));
+
+        $help->handle($update);
     }
 }

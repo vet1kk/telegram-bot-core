@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BotTest\TestCase\Http\Message;
 
 use Bot\Http\Message\SendMessage;
+use Bot\Keyboard\KeyboardInterface;
 use Bot\Keyboard\ReplyKeyboard;
 use PHPUnit\Framework\TestCase;
 
@@ -64,6 +65,22 @@ final class SendMessageTest extends TestCase
 
     /**
      * @return void
+     * @throws \JsonException
+     */
+    public function testSetOptionsReplacesPayloadOptions(): void
+    {
+        $msg = SendMessage::create()
+                          ->setChatId(1)
+                          ->setText('x')
+                          ->setOptions(['parse_mode' => 'Markdown']);
+
+        $data = $msg->jsonSerialize();
+
+        $this->assertSame('Markdown', $data['parse_mode']);
+    }
+
+    /**
+     * @return void
      */
     public function testValidateThrowsWhenChatIdMissing(): void
     {
@@ -81,6 +98,24 @@ final class SendMessageTest extends TestCase
         $msg = SendMessage::create()->setChatId(1);
 
         $this->expectException(\InvalidArgumentException::class);
+        $msg->validate();
+    }
+
+    /**
+     * @return void
+     */
+    public function testValidateThrowsWhenKeyboardIsInvalid(): void
+    {
+        $keyboard = $this->createMock(KeyboardInterface::class);
+        $keyboard->method('isValid')->willReturn(false);
+
+        $msg = SendMessage::create()
+                          ->setChatId(1)
+                          ->setText('x')
+                          ->setKeyboard($keyboard);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid keyboard');
         $msg->validate();
     }
 }

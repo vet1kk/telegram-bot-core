@@ -29,4 +29,16 @@ final class OptionsTraitTest extends TestCase
         $this->assertArrayHasKey('a', $all);
         $this->assertArrayHasKey('c', $all);
     }
+
+    public function testSetOptionsCanOverrideExistingValues(): void
+    {
+        $obj = new class {
+            use OptionsTrait;
+        };
+
+        $obj->setOptions(['a' => 1, 'b' => 2]);
+        $obj->setOptions(['b' => 3], true);
+
+        $this->assertSame(['b' => 3], $obj->getOptions());
+    }
 }

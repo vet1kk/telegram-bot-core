@@ -78,4 +78,21 @@ final class WebhookHandlerTest extends TestCase
 
         $this->assertNull($handler->handle());
     }
+
+    /**
+     * @return void
+     */
+    public function testReadInputIsAccessibleThroughSubclass(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $handler = new class ($logger) extends WebhookHandler {
+            public function readInputPublic(): string|false
+            {
+                return $this->readInput();
+            }
+        };
+
+        $this->assertIsString($handler->readInputPublic());
+    }
 }

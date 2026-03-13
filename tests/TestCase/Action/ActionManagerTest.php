@@ -10,6 +10,7 @@ use Bot\Event\EventManagerInterface;
 use Bot\Event\Events\ActionHandledEvent;
 use Bot\Event\Events\UnhandledEvent;
 use BotTest\Fixture\TestActionWithAttribute;
+use BotTest\Fixture\TestActionWithMultipleAttributes;
 use BotTest\Fixture\TestActionWithoutAttribute;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -27,6 +28,18 @@ final class ActionManagerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $manager->register(TestActionWithoutAttribute::class);
+    }
+
+    /**
+     * @return void
+     * @throws \ReflectionException
+     */
+    public function testRegisterThrowsWhenMultipleAttributesArePresent(): void
+    {
+        $manager = $this->createManager();
+        $this->expectException(\LogicException::class);
+
+        $manager->register(TestActionWithMultipleAttributes::class);
     }
 
     /**

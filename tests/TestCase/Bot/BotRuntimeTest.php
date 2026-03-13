@@ -101,6 +101,71 @@ final class BotRuntimeTest extends TestCase
 
     /**
      * @return void
+     * @throws \Exception
+     */
+    public function testRunDelegatesToMiddlewareAndThenRouter(): void
+    {
+        $bot = Bot::create('token');
+
+        $update = MessageUpdateDTO::fromArray([
+            'message' => [
+                'message_id' => 1,
+                'date' => 1233456789,
+                'text' => '/x',
+                'chat' => [
+                    'id' => 123456789,
+                    'type' => 'private',
+                    'first_name' => 'Test User',
+                ],
+            ],
+        ], false);
+
+        $middleware = $this->createMock(MiddlewareManagerInterface::class);
+        $middleware->expects($this->once())
+                   ->method('process')
+                   ->with($update, $this->isType('callable'))
+                   ->willReturnCallback(function (MessageUpdateDTO $u, callable $next): void {
+                       $next($u);
+                   });
+
+        $router = $this->createMock(RouterInterface::class);
+        $router->expects($this->once())->method('route')->with($update);
+
+        $bot->getContainer()->set(MiddlewareManagerInterface::class, $middleware);
+        $bot->getContainer()->set(RouterInterface::class, $router);
+
+        $bot->run($update);
+    }
+
+    /**
+     * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Exception
+     */
+    public function testRunFromWebhookLogsFailureWhenUpdateCreationFails(): void
+    {
+        $bot = Bot::create('token');
+
+        $webhook = $this->createMock(WebhookHandlerInterface::class);
+        $webhook->expects($this->once())->method('handle')->willReturn(null);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+               ->method('error')
+               ->with(
+                   'Webhook processing failed',
+                   $this->callback(static fn(array $context): bool => $context['error'] === 'Unsupported update type')
+               );
+
+        $c = $bot->getContainer();
+        $c->set(WebhookHandlerInterface::class, $webhook);
+        $c->set(LoggerInterface::class, $logger);
+
+        $bot->runFromWebhook();
+    }
+
+    /**
+     * @return void
      * @throws \Psr\Container\ContainerExceptionInterface
      * @throws \Exception
      */
