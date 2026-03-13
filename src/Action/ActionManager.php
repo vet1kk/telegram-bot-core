@@ -33,12 +33,15 @@ class ActionManager implements ActionManagerInterface
     }
 
     /**
-     * @param class-string<\Bot\Action\ActionInterface> $actionClass
      * @return $this
      * @throws \ReflectionException
      */
     public function register(string $actionClass): self
     {
+        if (!is_a($actionClass, ActionInterface::class, true)) {
+            throw new \InvalidArgumentException("Class $actionClass must implement " . ActionInterface::class . '.');
+        }
+
         $reflection = new ReflectionClass($actionClass);
         $attributes = $reflection->getAttributes(ActionAttr::class);
 

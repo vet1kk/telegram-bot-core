@@ -9,7 +9,7 @@ use Bot\DTO\Update\CallbackQueryUpdateDTO;
 interface ActionManagerInterface
 {
     /**
-     * @param string $actionClass
+     * @param class-string<\Bot\Action\ActionInterface> $actionClass
      * @return self
      */
     public function register(string $actionClass): self;

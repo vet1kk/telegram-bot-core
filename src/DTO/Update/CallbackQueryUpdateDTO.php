@@ -6,9 +6,6 @@ namespace Bot\DTO\Update;
 
 use Bot\DTO\Message\CallbackQueryDTO;
 
-/**
- * @extends \Bot\DTO\Update\UpdateDTO<\Bot\DTO\Update\CallbackQueryUpdateDTO>
- */
 class CallbackQueryUpdateDTO extends UpdateDTO
 {
     public ?CallbackQueryDTO $callback_query = null;

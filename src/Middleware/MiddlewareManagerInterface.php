@@ -9,7 +9,7 @@ use Bot\DTO\Update\UpdateDTO;
 interface MiddlewareManagerInterface
 {
     /**
-     * @param string $middlewareClass
+     * @param class-string<\Bot\Middleware\MiddlewareInterface> $middlewareClass
      * @return self
      */
     public function register(string $middlewareClass): self;

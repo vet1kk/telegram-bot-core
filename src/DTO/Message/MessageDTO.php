@@ -7,9 +7,6 @@ namespace Bot\DTO\Message;
 use Bot\DTO\DTO;
 use Bot\Enum\MessageMediaType;
 
-/**
- * @extends \Bot\DTO\DTO<\Bot\DTO\Message\MessageDTO>
- */
 class MessageDTO extends DTO
 {
     public ?int $message_id = null;
@@ -51,10 +48,7 @@ class MessageDTO extends DTO
             );
         }
 
-        /** @var \Bot\DTO\Message\MessageDTO $self */
-        $self = parent::fromArray($data, $validate);
-
-        return $self;
+        return parent::fromArray($data, $validate);
     }
 
     /**

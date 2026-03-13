@@ -7,10 +7,6 @@ namespace Bot\DTO\Update;
 use Bot\DTO\DTO;
 use Bot\Trait\ReplyTrait;
 
-/**
- * @template T of \Bot\DTO\Update\UpdateDTO
- * @extends \Bot\DTO\DTO<T>
- */
 class UpdateDTO extends DTO
 {
     use ReplyTrait;

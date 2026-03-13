@@ -33,12 +33,15 @@ class CommandManager implements CommandManagerInterface
     }
 
     /**
-     * @param class-string<\Bot\Command\CommandInterface> $commandClass
      * @return $this
      * @throws \ReflectionException
      */
     public function register(string $commandClass): self
     {
+        if (!is_a($commandClass, CommandInterface::class, true)) {
+            throw new \InvalidArgumentException("Class $commandClass must implement " . CommandInterface::class . '.');
+        }
+
         $reflection = new ReflectionClass($commandClass);
         $attributes = $reflection->getAttributes(CommandAttr::class);
 

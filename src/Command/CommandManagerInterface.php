@@ -9,7 +9,7 @@ use Bot\DTO\Update\MessageUpdateDTO;
 interface CommandManagerInterface
 {
     /**
-     * @param string $commandClass
+     * @param class-string<\Bot\Command\CommandInterface> $commandClass
      * @return self
      */
     public function register(string $commandClass): self;

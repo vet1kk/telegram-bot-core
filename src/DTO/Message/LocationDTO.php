@@ -6,9 +6,6 @@ namespace Bot\DTO\Message;
 
 use Bot\DTO\DTO;
 
-/**
- * @extends \Bot\DTO\DTO<\Bot\DTO\Message\LocationDTO>
- */
 class LocationDTO extends DTO
 {
     public ?float $longitude = null;

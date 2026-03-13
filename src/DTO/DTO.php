@@ -7,7 +7,7 @@ namespace Bot\DTO;
 use Bot\Trait\OptionsTrait;
 
 /**
- * @template T of \Bot\DTO\DTO
+ * @psalm-consistent-constructor
  */
 abstract class DTO implements \JsonSerializable
 {
@@ -17,7 +17,6 @@ abstract class DTO implements \JsonSerializable
 
     /**
      * @return static
-     * @phpstan-return T
      */
     public static function default(): static
     {
@@ -28,7 +27,6 @@ abstract class DTO implements \JsonSerializable
      * @param array $data
      * @param bool $validate
      * @return static
-     * @phpstan-return T
      */
     public static function fromArray(array $data = [], bool $validate = true): static
     {
@@ -108,15 +106,32 @@ abstract class DTO implements \JsonSerializable
             $className = $type->getName();
 
             if (is_subclass_of($className, self::class)) {
+                /** @var class-string<self> $className */
                 $value = $className::fromArray($value, $validate);
             }
         }
 
         if ($type instanceof \ReflectionNamedType && $type->isBuiltin()) {
             $value = match ($type->getName()) {
-                'integer', 'int' => (int)$value,
-                'double', 'float' => (float)$value,
-                'string' => (string)$value,
+                'integer', 'int' => match (true) {
+                    is_int($value) => $value,
+                    is_float($value), is_bool($value), is_string($value), $value === null => (int)$value,
+                    is_array($value) => empty($value) ? 0 : 1,
+                    default => throw new \InvalidArgumentException(
+                        sprintf('Property `%s` expects an int-compatible value', $property)
+                    ),
+                },
+                'double', 'float' => match (true) {
+                    is_float($value) => $value,
+                    is_int($value), is_bool($value), is_string($value), $value === null => (float)$value,
+                    is_array($value) => empty($value) ? 0.0 : 1.0,
+                    default => throw new \InvalidArgumentException(
+                        sprintf('Property `%s` expects a float-compatible value', $property)
+                    ),
+                },
+                'string' => is_scalar($value) || $value === null ? (string)$value : throw new \InvalidArgumentException(
+                    sprintf('Property `%s` expects a string-compatible value', $property)
+                ),
                 'bool' => (bool)$value,
                 'array' => (array)$value,
                 'object' => (object)$value,

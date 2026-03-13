@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Bot\Keyboard\Buttons;
 
-/**
- * @extends \Bot\Keyboard\Buttons\Button<\Bot\Keyboard\Buttons\ReplyButton>
- */
 class ReplyButton extends Button
 {
     protected bool $requestContact = false;

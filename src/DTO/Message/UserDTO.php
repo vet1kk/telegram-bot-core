@@ -6,9 +6,6 @@ namespace Bot\DTO\Message;
 
 use Bot\DTO\DTO;
 
-/**
- * @extends \Bot\DTO\DTO<\Bot\DTO\Message\UserDTO>
- */
 class UserDTO extends DTO
 {
     public ?int $id = null;

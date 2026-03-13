@@ -7,7 +7,7 @@ namespace Bot\Keyboard;
 use Bot\Keyboard\Buttons\ButtonInterface;
 
 /**
- * @template T of \Bot\Keyboard\Keyboard
+ * @psalm-consistent-constructor
  */
 abstract class Keyboard implements KeyboardInterface
 {
@@ -16,7 +16,6 @@ abstract class Keyboard implements KeyboardInterface
 
     /**
      * @return static
-     * @psalm-return T
      */
     public static function create(): static
     {
@@ -27,7 +26,6 @@ abstract class Keyboard implements KeyboardInterface
      * @param \Bot\Keyboard\Buttons\ButtonInterface $button
      * @param int $line Line number (starting from 1)
      * @return $this
-     * @psalm-return T
      */
     public function addButton(ButtonInterface $button, int $line = 1): static
     {
@@ -50,7 +48,6 @@ abstract class Keyboard implements KeyboardInterface
      * @param \Bot\Keyboard\Buttons\ButtonInterface[] $buttons
      * @param int $line Line number (starting from 1)
      * @return $this
-     * @psalm-return T
      */
     public function addButtons(array $buttons, int $line = 1): static
     {
@@ -79,6 +76,6 @@ abstract class Keyboard implements KeyboardInterface
      */
     public function isValid(): bool
     {
-        return !empty($this->panel) && !empty($this->panel[0]);
+        return $this->panel && ($this->panel[0] ?? []);
     }
 }

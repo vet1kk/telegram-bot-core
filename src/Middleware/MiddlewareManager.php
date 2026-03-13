@@ -22,11 +22,17 @@ class MiddlewareManager implements MiddlewareManagerInterface
     }
 
     /**
-     * @param class-string<MiddlewareInterface> $middlewareClass
+     * @param string $middlewareClass
      * @return self
      */
     public function register(string $middlewareClass): self
     {
+        if (!is_a($middlewareClass, MiddlewareInterface::class, true)) {
+            throw new \InvalidArgumentException(
+                "Class $middlewareClass must implement " . MiddlewareInterface::class . '.'
+            );
+        }
+
         $this->middlewareStack[] = $middlewareClass;
 
         return $this;

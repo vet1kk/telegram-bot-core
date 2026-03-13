@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bot\Keyboard\Buttons;
 
 /**
- * @template T of \Bot\Keyboard\Buttons\Button
+ * @psalm-consistent-constructor
  */
 abstract class Button implements ButtonInterface
 {
@@ -13,7 +13,6 @@ abstract class Button implements ButtonInterface
 
     /**
      * @return static
-     * @psalm-return T
      */
     public static function create(): static
     {
@@ -23,7 +22,6 @@ abstract class Button implements ButtonInterface
     /**
      * @param string $text
      * @return $this
-     * @psalm-return T
      */
     public function setText(string $text): static
     {

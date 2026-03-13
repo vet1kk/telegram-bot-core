@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Bot\Keyboard\Buttons;
 
-/**
- * @extends \Bot\Keyboard\Buttons\Button<\Bot\Keyboard\Buttons\InlineButton>
- */
 class InlineButton extends Button
 {
     public ?string $callbackData = null;

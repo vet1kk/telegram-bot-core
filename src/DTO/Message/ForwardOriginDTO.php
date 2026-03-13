@@ -7,10 +7,6 @@ namespace Bot\DTO\Message;
 use Bot\DTO\DTO;
 use Bot\Enum\ForwardOriginType;
 
-/**
- * @template T of \Bot\DTO\Message\ForwardOriginDTO
- * @extends \Bot\DTO\DTO<T>
- */
 class ForwardOriginDTO extends DTO
 {
     public ?string $type = null;
@@ -33,7 +29,7 @@ class ForwardOriginDTO extends DTO
     {
         $required = ['type', 'date'];
 
-        if ($this->type) {
+        if ($this->type !== null) {
             $type = ForwardOriginType::tryFrom($this->type);
 
             match ($type) {

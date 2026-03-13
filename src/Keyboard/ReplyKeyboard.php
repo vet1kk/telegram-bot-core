@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Bot\Keyboard;
 
-/**
- * @extends \Bot\Keyboard\Keyboard<\Bot\Keyboard\ReplyKeyboard>
- */
 class ReplyKeyboard extends Keyboard
 {
     protected bool $resize = true;

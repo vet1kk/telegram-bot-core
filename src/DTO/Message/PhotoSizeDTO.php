@@ -6,9 +6,6 @@ namespace Bot\DTO\Message;
 
 use Bot\DTO\DTO;
 
-/**
- * @extends \Bot\DTO\DTO<\Bot\DTO\Message\PhotoSizeDTO>
- */
 class PhotoSizeDTO extends DTO
 {
     public ?string $file_id = null;

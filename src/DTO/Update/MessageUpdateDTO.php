@@ -6,9 +6,6 @@ namespace Bot\DTO\Update;
 
 use Bot\DTO\Message\MessageDTO;
 
-/**
- * @extends \Bot\DTO\Update\UpdateDTO<\Bot\DTO\Update\MessageUpdateDTO>
- */
 class MessageUpdateDTO extends UpdateDTO
 {
     public ?MessageDTO $message = null;
@@ -24,14 +21,11 @@ class MessageUpdateDTO extends UpdateDTO
     {
         $message = $data['message'] ?? $data['edited_message'] ?? null;
 
-        if (!empty($message)) {
+        if ($message !== null) {
             $data['message'] ??= $message;
         }
 
-        /** @var \Bot\DTO\Update\MessageUpdateDTO $self */
-        $self = parent::fromArray($data, $validate);
-
-        return $self;
+        return parent::fromArray($data, $validate);
     }
 
     /**
