@@ -26,9 +26,9 @@ fi
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR"
 
-run_check "Composer CS" composer phpcs
-run_check "Psalm" composer phpcbf
-run_check "Psalm" composer psalm
+run_check "PHP CodeSniffer" composer phpcs
+run_check "PHP Code Beautifier and Fixer" composer phpcbf
+run_check "PHP Psalm" composer psalm
 run_check "Composer test suite" composer test
 
 echo "All checks passed. Proceeding with commit."

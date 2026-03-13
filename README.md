@@ -1,28 +1,37 @@
-# 🌟 Telegram Bot Core (v1.0.0)
+# Telegram Bot Core
 
-A professional, type-safe, and highly modular Telegram Bot framework for PHP 8.3+.
-This framework leverages **PSR-11 Dependency Injection**, **Middleware Pipelines**, and **Attribute-based Routing** to
-provide a
-decoupled and testable development experience.
----
+[![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![Packagist Version](https://img.shields.io/packagist/v/vet1kk/telegram-bot-core?logo=packagist&logoColor=white)](https://packagist.org/packages/vet1kk/telegram-bot-core)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/vet1kk/telegram-bot-core?logo=composer&logoColor=white)](https://packagist.org/packages/vet1kk/telegram-bot-core)
+[![Telegram Bot API](https://img.shields.io/badge/Telegram-Bot%20API-26A5E4?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
+[![PHPUnit](https://img.shields.io/badge/tests-PHPUnit%209-0A9EDC?logo=phpunit&logoColor=white)](./phpunit.xml)
+[![Psalm](https://img.shields.io/badge/static%20analysis-Psalm-4F2D7F)](./psalm.xml)
+[![Type Coverage](https://img.shields.io/badge/type%20coverage-99.7%25-brightgreen)](./psalm.xml)
+[![Line Coverage](https://img.shields.io/badge/line%20coverage-98.2%25-brightgreen)](./phpunit.xml)
+[![License](https://img.shields.io/github/license/vet1kk/telegram-bot-core)](./LICENSE)
 
-## Key Features
+Lightweight Telegram bot core for PHP 8.3+ with typed updates, attribute-based handlers, middleware, events, and a small
+DI-driven runtime.
 
-* **Interface-Driven Architecture**: Every core component (Client, Router, Factory) is bound to an interface for 100%
-  swappability.
-* **Recursive DTO Graph**: Updates are transformed into structured object trees (e.g., `Update` -> `Message` ->
-  `Chat`) via Reflection.
-* **Attribute Routing**: Register Commands and Actions directly on classes using native PHP attributes.
-* **Middleware Stack**: Intercept and process updates globally for maintenance mode, logging, or authentication.
-* **Event System**: Emit and listen to custom events for decoupled side effects like logging or analytics.
-* **2D Keyboard Panel**: Build complex button grids with automatic validation and recursive JSON serialization.
-* **99%+ Type Coverage**: Verified with Psalm to ensure a rock-solid, predictable codebase
-* **Multiple Bot Support**: Easily manage multiple bots with separate configurations and service providers.
-* **Test Coverage**: Comprehensive unit tests ensure reliability and maintainability.
+It is designed for projects that want Telegram bot wiring without bringing in a full framework.
 
----
+## Highlights
 
-## Getting Started
+- Strictly typed PHP 8.3 codebase
+- Attribute-based commands, actions, and listeners
+- Typed DTO tree for Telegram updates
+- Middleware pipeline for cross-cutting behavior
+- Event manager for decoupled side effects
+- Inline and reply keyboard builders
+- PSR-11 container support through `php-di/php-di`
+- Covered by PHPUnit tests and Psalm static analysis
+
+## Requirements
+
+- PHP `8.3+`
+- Extensions: `curl`, `json`, `mbstring`
+- A Telegram bot token from [@BotFather](https://t.me/BotFather)
+- A public webhook URL for production webhook handling
 
 ## Installation
 
@@ -30,363 +39,264 @@ decoupled and testable development experience.
 composer require vet1kk/telegram-bot-core
 ```
 
-### 1. Register and Initialize the Bot
+## Quick start
 
-The `Bot` class is a **final orchestrator**. It initializes the `DI\Container` and registers core services via the
-`CoreServiceProvider`.
+Create a webhook entrypoint and register your handlers. The library bootstraps its core services for you.
 
 ```php
+<?php
+
+declare(strict_types=1);
+
+use Bot\Bot;
+use App\Command\StartCommand;
+use App\Action\MenuAction;
+use App\Listener\FallbackListener;
+use App\Middleware\TimingMiddleware;
+use App\Provider\AppServiceProvider;
+
+require __DIR__ . '/vendor/autoload.php';
+
+Bot::create($_ENV['TELEGRAM_BOT_TOKEN'])
+    ->withServiceProvider(new AppServiceProvider())
+    ->withMiddleware(TimingMiddleware::class)
+    ->withCommand(StartCommand::class)
+    ->withAction(MenuAction::class)
+    ->withListener(FallbackListener::class)
+    ->runFromWebhook();
+```
+
+If you only need to register the webhook once:
+
+```php
+<?php
+
+declare(strict_types=1);
+
 use Bot\Bot;
 
-$bot = Bot::create('YOUR_TELEGRAM_TOKEN', [
-    // Any optional configuration settings, can be accessed via the ConfigServiceInterface later in your commands or actions etc.
-    'maintenance.enabled' => true,
-]);
+require __DIR__ . '/vendor/autoload.php';
+
+Bot::create($_ENV['TELEGRAM_BOT_TOKEN'])
+    ->registerWebhook('https://example.com/telegram/webhook.php');
 ```
 
-### 2. Configure the Execution Pipeline
+## Your first command
+
+Commands handle Telegram messages such as `/start`.
 
 ```php
-// In your webhook.php
-$bot->withMiddleware(YourMiddleware::class)
-    ->withCommand(YourCommand::class)
-    ->withAction(YourAction::class)
-    ->withListener(YourListener::class)
-    ->withServiceProvider(YourServiceProvider::class);
-          
-// Captured by the WebhookHandlerInterface, transformed, and routed.
-$bot->runFromWebhook();
-```
+<?php
 
----
+declare(strict_types=1);
 
-## Webhook Management
-
-### 1. Webhook Registration
-
-Link your server's URL with the Telegram API **once** during setup.
-
-```php
-$bot->registerWebhook('https://your-domain.com/webhook.php');
-```
-
-### 2. Execution Lifecycle
-
-#### The `runFromWebhook` method manages the complete lifecycle through decoupled services:
-
-* **Ingestion**: `WebhookHandlerInterface` captures raw input (defaults to `php://input`).
-* **Transformation**: `UpdateFactoryInterface` builds the DTO graph via Reflection.
-* **Events**: Emits `ReceivedEvent` for global logging/analytics or any other job.
-* **Middleware Processing**: Passes the DTO through your registered middleware stack.
-* **Routing**: Delivers the update to the appropriate Command or Action handler.
-
---- 
-
-## Creating Commands
-
-Commands handle text messages starting with `/`. Define them by implementing `CommandInterface` and adding the
-`#[Command]` attribute.
-Use **Interfaces** for type-hinting dependencies.
-
-```php
-namespace App\Commands;
+namespace App\Command;
 
 use Bot\Attribute\Command;
-use Bot\Http\ClientInterface;
 use Bot\Command\CommandInterface;
-use Bot\DTO\Update\MessageUpdateDTO;use Bot\Http\Message\SendMessage;
+use Bot\DTO\Update\MessageUpdateDTO;
 
-#[Command(name: 'finish', description: 'Close the current session')]
-class FinishCommand implements CommandInterface 
+#[Command(name: 'start', description: 'Send a welcome message')]
+final class StartCommand implements CommandInterface
 {
-     public function __construct(
-        // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
-        // The container will automatically resolve it when the action is executed.
-        // (Don't forget to register the service in your service provider)
-        protected ClientInterface $client
-    ) {}
-    
-    public function handle(MessageUpdateDTO $update): void 
+    public function handle(MessageUpdateDTO $update): void
     {
-        // Send a reply to the user via the Update's reply method, which abstracts away the Client and Chat details.
-        $update->reply('See you later!');
-        
-        // Or you can use the Client directly if you need more control
-        $message = SendMessage::create()
-                              ->setChatId($update->getChatId())
-                              ->setText('See you later!');
-        $this->client->sendMessage($message);
+        $update->reply('Hello! Your bot is running.');
     }
 }
-
-// Register in your bootstrap
-$bot->withCommand(FinishCommand::class);
 ```
 
----
+## Your first action
 
-## Event Management
-
-The `EventManager` decouples side effects from core logic. Listeners are scanned for the `#[Listener]` attribute.
-
-### 1. Registering a Listener
-
-Listeners are registered using the `withListener` method. The framework uses Reflection to scan for the `#[Listener]`
-attribute on class methods to map them to specific event classes.
-
-#### Build-in Events
-
-* `ReceivedEvent`: Immediately after transformation.
-* `CommandHandledEvent` / `ActionHandledEvent`: After successful execution.
-* `UnhandledEvent`: Emitted when no command or action matches the update.
-
-### 2. Creating Listeners
+Actions handle `callback_query` updates from inline keyboard buttons.
 
 ```php
-use Bot\Attribute\Listener;
-use Bot\Event\Events\CommandHandledEvent;
-use Bot\Listener\ListenerInterface;
-use App\Services\AnalyticsService;
+<?php
 
-class AnalyticsListener implements ListenerInterface
-{
-    public function __construct(
-        // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
-        // The container will automatically resolve it when the action is executed.
-        // (Don't forget to register the service in your service provider)
-        protected AnalyticsService $analyticsService
-    ) {}
+declare(strict_types=1);
 
-    #[Listener(CommandHandledEvent::class)] // Specify the event class to listen for
-    public function logCommandUsage(CommandHandledEvent $event): void
-    {
-        // Access the command and the update that triggered it
-        $command = $event->getCommand();
-        $update = $event->getUpdate();
-        
-        // Log or store analytics data as needed
-        // For example, you could log the command name and the user who triggered it
-        $this->analyticsService->trackCommandUsage($command::class, $update->getUserId());
-    }
-}
-
-// Register in your bootstrap
-$bot->withListener(AnalyticsListener::class);
-```
-
-### 3. Emitting Custom Events
-
-You can also emit your own events from anywhere within your application by retrieving the `EventManager` from the
-`container`.
-
-```php
-$eventManager = $container->get(EventManager::class);
-$eventManager->emit(new MyCustomEvent($data));
-```
-
----
-
-## Creating Actions
-
-Actions handle `callback_query` data from inline buttons. Use the `#[Action]` attribute to map the data string to a
-specific class.
-
-```php
-namespace App\Actions;
+namespace App\Action;
 
 use Bot\Action\ActionInterface;
 use Bot\Attribute\Action;
 use Bot\DTO\Update\CallbackQueryUpdateDTO;
-use Bot\Http\Client;
 use Bot\Keyboard\Buttons\InlineButton;
 use Bot\Keyboard\InlineKeyboard;
-use Bot\Http\Message\SendMessage;
 
-#[Action(name: 'menu')]
-class MenuAction implements ActionInterface 
+#[Action(name: 'menu', description: 'Open the main menu')]
+final class MenuAction implements ActionInterface
 {
-     public function __construct(
-        // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
-        // The container will automatically resolve it when the action is executed.
-        // (Don't forget to register the service in your service provider)
-    ) {}
-    
-    public function handle(CallbackQueryUpdateDTO $update): void 
+    public function handle(CallbackQueryUpdateDTO $update, array $params = []): void
     {
-        // 1. Build Inline Buttons using the fluent API
-        $profileBtn = InlineButton::create()
-                                  ->setText('👤 Profile')
-                                  ->setCallbackData('user_profile');
-    
-        $settingsBtn = InlineButton::create()
-                                   ->setText('⚙️ Settings')
-                                   ->setCallbackData('settings_menu');
-    
-        $helpBtn = InlineButton::create()
-                               ->setText('❓ Help')
-                               ->setCallbackData('help_info');
-    
-        // 2. Build the Keyboard grid
         $keyboard = InlineKeyboard::create()
-                                  ->addButton($profileBtn, line: 1)
-                                  ->addButton($settingsBtn, line: 1)
-                                  ->addButton($helpBtn, line: 2);
-    
-        // 3. Reply to the user with the keyboard
-        $update->reply("Please choose an option:", $keyboard);
+            ->addButton(
+                InlineButton::create()
+                    ->setText('Help')
+                    ->setCallbackData('help'),
+                1
+            )
+            ->addButton(
+                InlineButton::create()
+                    ->setText('Settings')
+                    ->setCallbackData('settings'),
+                1
+            );
+
+        $update->reply('Choose an option:', $keyboard);
     }
 }
-
-// Register in your bootstrap
-$bot->withAction(MenuAction::class);
 ```
 
----
+## Middleware
 
-## Creating Middleware
-
-Middlewares allow you to intercept updates before they reach the router. They are processed as a pipeline, where each
-layer can stop execution or pass it to the next.
+Middleware runs before the router dispatches an update and is useful for timing, auth, maintenance mode, or logging.
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 namespace App\Middleware;
 
 use Bot\DTO\Update\UpdateDTO;
 use Bot\Middleware\MiddlewareInterface;
 use Psr\Log\LoggerInterface;
 
-class TimerMiddleware implements MiddlewareInterface
+final class TimingMiddleware implements MiddlewareInterface
 {
-    public function __construct(
-        // Inject any dependencies here, e.g. a service or repository that you want to use in the action.
-        // The container will automatically resolve it when the action is executed.
-        // (Don't forget to register the service in your service provider)
-        protected LoggerInterface $logger
-    ) {}
+    public function __construct(private LoggerInterface $logger)
+    {
+    }
 
     public function process(UpdateDTO $update, callable $next): void
     {
-        $start = microtime(true);
+        $startedAt = microtime(true);
 
-        // 1. Pass the update down the chain
         $next($update);
 
-        // 2. Logic after the bot has finished processing
-        $duration = microtime(true) - $start;
-
-        $this->logger->info("Update handled in " . round($duration, 4) . "s");
+        $this->logger->info('Update handled', [
+            'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+        ]);
     }
 }
-
-// Register it in your bootstrap
-$bot->withMiddleware(TimerMiddleware::class);
 ```
 
----
+## Event listeners
 
-## Dependency Injection & Service Providers
+Listeners let you react to lifecycle events without coupling side effects to your handlers.
 
-Implement `ServiceProviderInterface` to bind your implementations to the container or override core services.
+Built-in events include:
 
-### 1. Create a Service Provider
-
-Implement the `ServiceProviderInterface` to define how your custom classes should be instantiated.
+- `Bot\Event\Events\ReceivedEvent`
+- `Bot\Event\Events\CommandHandledEvent`
+- `Bot\Event\Events\ActionHandledEvent`
+- `Bot\Event\Events\UnhandledEvent`
 
 ```php
-namespace App\Providers;
+<?php
+
+declare(strict_types=1);
+
+namespace App\Listener;
+
+use Bot\Attribute\Listener;
+use Bot\Event\Events\UnhandledEvent;
+use Bot\Listener\ListenerInterface;
+use Psr\Log\LoggerInterface;
+
+final class FallbackListener implements ListenerInterface
+{
+    public function __construct(private LoggerInterface $logger)
+    {
+    }
+
+    #[Listener(eventClass: UnhandledEvent::class)]
+    public function onUnhandled(UnhandledEvent $event): void
+    {
+        $this->logger->info('Unhandled update received');
+
+        $update = $event->getUpdate();
+        if ($update->getChatId() !== null) {
+            $update->reply("Sorry, I didn't understand that message.");
+        }
+    }
+}
+```
+
+## Service providers and customization
+
+The core runtime registers sensible defaults, including a `NullLogger`, webhook handler, client, router, managers, and
+update factory. Override or extend them with your own service provider.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Provider;
 
 use Bot\Provider\ServiceProviderInterface;
-use App\Services\AnalyticsService;
+use Bot\Webhook\WebhookHandlerInterface;
 use DI\Container;
+use App\Webhook\FrameworkWebhookHandler;
 
-class UserServiceProvider implements ServiceProviderInterface
+final class AppServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $container): void
     {
-        // Swap the default ingestion for a framework-specific one
-        $container->set(WebhookHandlerInterface::class, \DI\autowire(LaravelWebhookHandler::class));
-        
-        // Register custom services
-        $container->set(AnalyticsService::class, \DI\autowire(AnalyticsService::class));
+        $container->set(
+            WebhookHandlerInterface::class,
+            \DI\autowire(FrameworkWebhookHandler::class)
+        );
     }
 }
 ```
 
-### Tip: The "Master Provider" Pattern
+If you are integrating this library into Laravel, Symfony, Slim, or another HTTP stack, swapping
+`Bot\Webhook\WebhookHandlerInterface` is usually the first extension point.
 
-For larger applications, you can encapsulate your entire bot's logic (commands, actions, listeners, and custom services)
-into a single **Master Service Provider**.
-This keeps your entry-point (webhook.php) clean and your configuration centralized.
+## Running updates manually
 
-#### 1. Create a Master Provider
+For tests or custom transports, you can create an `UpdateDTO` and execute the pipeline directly with
+`Bot::run($update)`.
 
-```php
-namespace App\Providers;
+`Bot::runFromWebhook()` is just a convenience around reading the webhook payload, building the update DTO, emitting
+`ReceivedEvent`, and routing the update through middleware.
 
-use Bot\Provider\ServiceProviderInterface;
-use Bot\Command\CommandManagerInterface;
-use Bot\Action\ActionManagerInterface;
-use Bot\Event\EventManagerInterface;
-use App\Commands\{StartCommand, HelpCommand};
-use App\Actions\MenuAction;
-use DI\Container;
+## Development commands
 
-class BotServiceProvider implements ServiceProviderInterface
-{
-    public function register(Container $container): void
-    {
-        // Register Commands
-        $container->get(CommandManagerInterface::class)
-                  ->register(StartCommand::class)
-                  ->register(HelpCommand::class);
-
-        // Register Actions
-        $container->get(ActionManagerInterface::class)
-                  ->register(MenuAction::class);
-
-        // Bind custom services
-        $container->set(UserRepository::class, \DI\autowire(UserRepository::class));
-    }
-}
+```bash
+composer test
+composer test:coverage
+composer psalm
+composer psalm:stats
+composer phpcs
+composer phpcbf
 ```
 
-#### 2. The Result: A 2-Line Webhook
+## Quality snapshot
 
-Your production entry point remains untouched regardless of how many commands you add.
+Current local quality snapshot for this repository:
 
-```php
-// webhook.php
-$bot = Bot::create('TOKEN', $options)
-    ->withServiceProvider(BotServiceProvider::class);
+- Psalm inferred types for `99.7207%` of the codebase
+- PHPUnit suite: `106` tests, `240` assertions
+- PHPUnit coverage: `98.17%` lines, `94.93%` methods, `85.37%` classes
 
-$bot->runFromWebhook();
+You can refresh these numbers locally with:
+
+```bash
+composer psalm
+composer test:coverage
 ```
 
----
+## Project notes
 
-## Multi-Bot Support
+- Namespace: `Bot\\`
+- License: `MIT`
+- Homepage: `https://github.com/vet1kk/telegram-bot-core`
+- Issue tracker: `https://github.com/vet1kk/telegram-bot-core/issues`
 
-Because the framework is built on an isolated **Dependency Injection Container**, you can manage multiple bot instances
-simultaneously — each with its own token, configuration, and logic.
+## Contributing
 
-This is ideal for projects that require a "User Bot" and an "Admin Bot" with different command sets.
-
-**Note on Routing**: The default `WebhookHandler` is designed for standalone scripts.
-If your bot lives inside a modern PHP framework or handles multiple bot identities, simply implement
-WebhookHandlerInterface.
-This allows you to pull the Telegram update from a PSR-7 Request, a Laravel Request object, or even a local test file
-without changing a single line of your bot's business logic.
-
-```php
-// 1. Configure the Support Bot
-// support.webhook.php
-$supportBot = Bot::create('SUPPORT_TOKEN', ['log_channel' => 'support_logs'])
-    ->withServiceProvider(SupportServiceProvider::class)
-    ->runFromWebhook();
-
-// 2. Configure the Marketing Bot
-// marketing.webhook.php
-$marketingBot = Bot::create('MARKETING_TOKEN', ['promo_mode' => true])
-    ->withServiceProvider(MarketingServiceProvider::class)
-    ->runFromWebhook();
-```
+Issues and pull requests are welcome. If you add new features or integrations, please include tests where it makes sense
+so the public API stays reliable.
